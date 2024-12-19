@@ -1,0 +1,28 @@
+/* UI, SPACE 포함하는 최상위 div */
+.WRAP{
+    position: absolute;
+    top : 0;
+    left : 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* 게임 판과 기물이 구현되는 Canvas (React-three/fiber) */
+.SPACE{
+    position: absolute;
+    top : 0;
+    left : 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+}
+
+/* 게임 UI가 구현되는 div */
+.UI{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
