@@ -2,9 +2,11 @@
 import styles from '../public/css/chess.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
+import { v4 as uuidv4} from 'uuid'
 
 type piece = "KING" | "QUEEN" | "ROOKS" | "BISHOPS" | "KNIGHTS" | "PAWNS" | "NONE";
 
@@ -18,6 +20,9 @@ interface cell {
     visible: boolean
     mesh : THREE.Mesh
     onUnit: boolean
+    onUnitTeam: "white" | "black" | "none"
+    canAttack: boolean
+    canGo: boolean
 }
 
 class Cell implements cell{
@@ -25,6 +30,9 @@ class Cell implements cell{
     public readonly color: "white" | "black";
     public mesh: THREE.Mesh; 
     public onUnit;
+    public canAttack;
+    public canGo;
+    public onUnitTeam: "white" | "black" | "none";
 
     constructor(
         public piece : piece,
@@ -77,13 +85,16 @@ class Cell implements cell{
         this.mesh.position.set(
             this.getCol() * 5 - 22.5,
             this.layer * 7 - 35,
-            this.row * 5 - 22.5
+            this.row * -5 + 22.5  
         );
 
         // 셀 데이터를 메쉬에 저장
         this.mesh.userData.cell = this;
 
         this.onUnit = false;
+        this.canAttack = false;
+        this.canGo = false;
+        this.onUnitTeam = "none"
     }
 
     getCol(){
@@ -134,78 +145,39 @@ class Board implements board{
 
 ////////////////////////////////////////////////////////
 
-// + action, showCanCell
-class Unit{ // == piece ( 체스 기물 )
+abstract class Unit{ // == piece ( 체스 기물 )
     public death:boolean;
-    public wasHandled:boolean;
-    protected move:{always : Array<Array<number>>, option?:Array<(boards:Array<Board>, toX:number, toZ:number, toY:number, toColor:string, wasHandled:boolean) => void>};
+    protected showingCell:Array<Cell> = []
     constructor(
         public team: "white" | "black",
         public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public board:Array<Board>
     ){
         this.death = false;
-        this.move = {always : []};
-        this.wasHandled = false;
-    }
-
-    addToScene(scene:THREE.Scene){
-
-    }
-
-    showCanCell(boards:Array<Board>){
-            this.hideCanCell(boards)
-            const materiali = boards[this.layer-1].cells[this.row -1][this.convertCol() -1].mesh.material as THREE.MeshBasicMaterial
-            materiali.color.set('red');
-
-            this.move.always.forEach(moveConfig => {
-                let toX, toY, toZ;
-                toX = this.convertCol() + moveConfig[0] - 1;
-                toZ = this.row + moveConfig[2] - 1
-                toY = this.layer + moveConfig[1] - 1;
-
-                if( (0<= toX && toX <= 7 ) && (0 <= toY && toY <= 7 ) && (0 <= toZ && toZ <= 7) ){
-                    console.log(boards[this.layer + moveConfig[1] - 1].cells)
-                    const material = boards[toY].cells[toZ][toX].mesh.material as THREE.MeshBasicMaterial
-                    material.color.set('yellow')
-                }
-            }) 
-
-            if(this.move.option){
-                this.move.option.forEach(action => {
-                    action(boards, this.convertCol(), this.row, this.layer, 'yellow', this.wasHandled)
-                })
-            }
+        board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnit = true;
+        board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnitTeam = team
     }
     
-    hideCanCell(boards:Array<Board>){
-            this.move.always.forEach(moveConfig => {
-
-                let toX, toY, toZ;
-                toX = this.convertCol() + moveConfig[0] - 1;
-                toZ = this.row + moveConfig[2] - 1
-                toY = this.layer + moveConfig[1] - 1;
-
-                if( (0<= toX && toX <= 7 ) && (0 <= toY && toY <= 7 ) && (0 <= toZ && toZ <= 7) ){
-                    const cell = boards[toY].cells[toZ][toX]
-                    const material = cell.mesh.material as THREE.MeshBasicMaterial;
-                    material.color.set(`${cell.color}`)
-                }
-            })
-
-            if(this.move.option){
-                this.move.option.forEach(action => {
-                    action(boards, this.convertCol(), this.row, this.layer, 'origin', this.wasHandled)
-                })
-            }
+    protected abstract showCanCell():void;
+    
+    public hideCanCell(){
+        this.showingCell.forEach(cell => {
+            let tempMaterial = cell.mesh.material as THREE.MeshBasicMaterial;
+            tempMaterial.color.set(`${cell.color}`)
+        })
+        this.showingCell = [];
+    }
+    public addToScene(scene:THREE.Scene){
+        //scene.add()    
     }
 
-    moveAct(){
-        this.wasHandled = true;
+    public move(){
+        
     }
 
-    convertCol(){
+    public convertCol(){
         switch(this.column){
             case "a":
                 return 1;
@@ -225,197 +197,518 @@ class Unit{ // == piece ( 체스 기물 )
                 return 8;
         }
     }
+
 }
 
-class Pawns extends Unit{
-    
-    public readonly unitType: piece
+class Queen extends Unit {
+    private wasHandled = false;
+    private config = {};
+    private ID:string;
     constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
     ){
-        super(team,row, column,layer);
-        this.unitType = "PAWNS";
-        this.move = {
-            always : [
-                [0,0,1]
-            ],
-            option : [
-                function existEnemy(boards:Array<Board>, nowCol:number, nowRow:number, nowLayer:number, toColor:string, wasHandled:boolean){
-                    let tempArray = [
-                        [1,0,1],
-                        [-1,0,1]
-                    ]
-                    tempArray.forEach(moveConfig => {
-                        let toX, toY, toZ;
-                        toX = nowCol + moveConfig[0] - 1;
-                        toZ = nowRow + moveConfig[2] - 1
-                        toY = nowLayer + moveConfig[1] - 1;
         
-                        if( (0<= toX && toX <= 7 ) && (0 <= toY && toY <= 7 ) && (0 <= toZ && toZ <= 7) ){
-                            if(boards[toY].cells[toZ][toX].onUnit){
-                                const material = boards[toY].cells[toZ][toX].mesh.material as THREE.MeshBasicMaterial
-                                const cell = boards[toY].cells[toZ][toX]
-                                if(toColor == 'origin'){
-                                    material.color.set(`${cell.color}`)
-                                }else{
-                                    material.color.set(toColor)
-                                }
-                            }
-                        }
-                    }) 
-
-                },
-                function firstHandle(boards:Array<Board>, nowCol:number, nowRow:number, nowLayer:number,toColor:string,  wasHandled:boolean){
-                    let toX, toY, toZ;
-                    toX = nowCol - 1;
-                    toZ = nowRow + 1;
-                    toY = nowLayer - 1;
+        super(team,row,column,layer, board)
+        this.ID = `${team}_BISHOPS_${uuidv4()}`
+    }
     
-                    if( (0<= toX && toX <= 7 ) && (0 <= toY && toY <= 7 ) && (0 <= toZ && toZ <= 7) ){
-                        if(!wasHandled){
-                            const material = boards[toY].cells[toZ][toX].mesh.material as THREE.MeshBasicMaterial
-                            const cell = boards[toY].cells[toZ][toX]
-                            if(toColor == 'origin'){
-                                material.color.set(`${cell.color}`)
-                            }else{
-                                material.color.set(toColor)
-                            }
-                        }
+    public showCanCell(): void {
+        this.hideCanCell()
+        const cells = this.board[this.layer - 1].cells
+        for(let i = 1; i <= 7; i++){    //foward
+            if(1 <= this.row + i && this.row + i <= 8){
+                let cell = cells[this.row + i - 1][this.convertCol() - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
                     }
+                    break;
                 }
-            ]
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
         }
-    }
-}
 
-class ROOKS extends Unit{
-    
-    public readonly unitType: piece
-    constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
-    ){
-        super(team,row, column,layer)
-        this.unitType = "ROOKS"
-        this.move = {
-            always : [
-                [1,0,0],
-                [2,0,0],
-                [3,0,0],
-                [4,0,0],
-                [5,0,0],
-                [6,0,0],
-                [7,0,0],
-                [8,0,0],
+        for(let i = 1; i <= 7; i++){    //backward
+            if(1 <= this.row - i && this.row - i <= 8){
+                let cell = cells[this.row - i - 1][this.convertCol() - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
 
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    //left
+            if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
+                let cell = cells[this.row - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
                 
-                [-1,0,0],
-                [-2,0,0],
-                [-3,0,0],
-                [-4,0,0],
-                [-5,0,0],
-                [-6,0,0],
-                [-7,0,0],
-                [-8,0,0],
+            }
+        }
 
-                [0,0,1],
-                [0,0,2],
-                [0,0,3],
-                [0,0,4],
-                [0,0,5],
-                [0,0,6],
-                [0,0,7],
-                [0,0,8],
+        for(let i = 1; i <= 7; i++){    //right
+            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
+                let cell = cells[this.row - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
+        }
 
-                [0,0,-1],
-                [0,0,-2],
-                [0,0,-3],
-                [0,0,-4],
-                [0,0,-5],
-                [0,0,-6],
-                [0,0,-7],
-                [0,0,-8],
-            ]
+        for(let i = 1; i <= 7; i++){    // 우 상향
+            if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
+                let cell = cells[this.row + i - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 우 하향
+            if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
+                let cell = cells[this.row - i - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 좌 상향
+            if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
+                let cell = cells[this.row + i - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 좌 하향
+            if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
+                let cell = cells[this.row - i - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
         }
     }
 }
 
-
-class Bishops extends Unit{
-    
-    public readonly unitType: piece
+class Bishops extends Unit {
+    private wasHandled = false;
+    private config = {}
+    private ID:string;
     constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
     ){
-        super(team,row, column,layer)
-        this.unitType = "BISHOPS"
-        this.move = {
-            always : [
+        
+        super(team,row,column,layer, board)
+        this.ID = `${team}_BISHOPS_${uuidv4()}`
+    }
+    public showCanCell(): void {
+        this.hideCanCell()
+        const cells = this.board[this.layer - 1].cells
+        for(let i = 1; i <= 7; i++){    // 우 상향
+            if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
+                let cell = cells[this.row + i - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 우 하향
+            if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
+                let cell = cells[this.row - i - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 좌 상향
+            if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
+                let cell = cells[this.row + i - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    // 좌 하향
+            if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
+                let cell = cells[this.row - i - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
+        }
+    }
+}
+
+class Rooks extends Unit {
+    private wasHandled = false;
+    private config = {}
+    private ID:string;
+    constructor(
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
+    ){
+        
+        super(team,row,column,layer, board)
+        this.ID = `${team}_ROOKS_${uuidv4()}`
+    }
+    public showCanCell(): void {
+        this.hideCanCell()
+        const cells = this.board[this.layer - 1].cells
+        for(let i = 1; i <= 7; i++){    //foward
+            if(1 <= this.row + i && this.row + i <= 8){
+                let cell = cells[this.row + i - 1][this.convertCol() - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    //backward
+            if(1 <= this.row - i && this.row - i <= 8){
+                let cell = cells[this.row - i - 1][this.convertCol() - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    //left
+            if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
+                let cell = cells[this.row - 1][this.convertCol() - i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+                
+            }
+        }
+
+        for(let i = 1; i <= 7; i++){    //right
+            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
+                let cell = cells[this.row - 1][this.convertCol() + i - 1];
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit) {
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')                        
+                        this.showingCell.push(cell)
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                    break;
+                }
+                if(cell.canGo){                
+                    this.showingCell.push(cell)
+                }
+            }
+        }
+    }
+}
+
+class King extends Unit{
+    
+    private wasHandled = false;
+    private config = {
+        moving : {
+            points : [
+                [1,0,0],
+                [-1,0,0],
+                
+                [0,0,1],
+                [0,0,-1],
+                
                 [1,0,1],
-                [2,0,2],
-                [3,0,3],
-                [4,0,4],
-                [5,0,5],
-                [6,0,6],
-                [7,0,7],
-                [8,0,8],
-
                 [1,0,-1],
-                [2,0,-2],
-                [3,0,-3],
-                [4,0,-4],
-                [5,0,-5],
-                [6,0,-6],
-                [7,0,-7],
-                [8,0,-8],
-
                 
                 [-1,0,1],
-                [-2,0,2],
-                [-3,0,3],
-                [-4,0,4],
-                [-5,0,5],
-                [-6,0,6],
-                [-7,0,7],
-                [-8,0,8],
-
-                
-                [-1,0,-1],
-                [-2,0,-2],
-                [-3,0,-3],
-                [-4,0,-4],
-                [-5,0,-5],
-                [-6,0,-6],
-                [-7,0,-7],
-                [-8,0,-8],
-
+                [-1,0,-1]
             ]
         }
     }
+    private ID:string;
+    constructor(
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
+    ){
+        super(team,row,column,layer, board)
+        this.ID = `${team}_KING_${uuidv4()}`
+    }
+
+    public showCanCell(): void {
+        this.hideCanCell()
+        this.config.moving.points.forEach(goTo => {
+            let goFoward = this.row + goTo[2] -1;
+            let goLR = this.convertCol() + goTo[0] -1;
+            let goLayer = this.layer + goTo[1] -1;
+
+            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
+                const cells = this.board[goLayer].cells
+                const cell = cells[goFoward][goLR];
+                
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true;
+                if(cell.onUnit){
+                    if(cell.onUnitTeam != this.team){                    
+                        cell.canAttack = true;
+                        material.color.set('red')
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                }
+                if(cell.canGo){
+                    this.showingCell.push(cell)
+                }
+            }
+        })
+    }
 }
 
-class Knight extends Unit{
-    
-    public readonly unitType: piece
-    constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
-    ){
-        super(team,row, column,layer)
-        this.unitType = "KNIGHTS"
-        this.move = {
-            always : [
-                [1,0,-2], //앞 2칸, 오른쪽 1칸 
+class Knights extends Unit{
+
+    private wasHandled = false;
+    private config = {
+        moving : {
+            points : [
+                [1,0,-2],
                 [-1,0,-2],
                 
                 [2,0,-1],
@@ -429,126 +722,124 @@ class Knight extends Unit{
             ]
         }
     }
-}
-
-
-class Queen extends Unit{
-    
-    public readonly unitType: piece
+    private ID:string;
     constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
     ){
-        super(team,row, column,layer)
-        this.unitType = "QUEEN"
-        this.move = {
-            always : [
-                [1,0,0],
-                [2,0,0],
-                [3,0,0],
-                [4,0,0],
-                [5,0,0],
-                [6,0,0],
-                [7,0,0],
-                [8,0,0],
-                
-                [-1,0,0],
-                [-2,0,0],
-                [-3,0,0],
-                [-4,0,0],
-                [-5,0,0],
-                [-6,0,0],
-                [-7,0,0],
-                [-8,0,0],
-                
-                [0,0,1],
-                [0,0,2],
-                [0,0,3],
-                [0,0,4],
-                [0,0,5],
-                [0,0,6],
-                [0,0,7],
-                [0,0,8],
+        super(team,row,column,layer, board)
+        this.ID = `${team}_KNIGHTS_${uuidv4()}`
+    }
 
-                [0,0,-1],
-                [0,0,-2],
-                [0,0,-3],
-                [0,0,-4],
-                [0,0,-5],
-                [0,0,-6],
-                [0,0,-7],
-                [0,0,-8],
+    public showCanCell(): void {
+        this.hideCanCell()
+        this.config.moving.points.forEach(goTo => {
+            let goFoward = this.row + goTo[2] -1;
+            let goLR = this.convertCol() + goTo[0] -1;
+            let goLayer = this.layer + goTo[1] -1;
 
-                [1,0,1],
-                [2,0,2],
-                [3,0,3],
-                [4,0,4],
-                [5,0,5],
-                [6,0,6],
-                [7,0,7],
-                [8,0,8],
-            
-                [1,0,-1],
-                [2,0,-2],
-                [3,0,-3],
-                [4,0,-4],
-                [5,0,-5],
-                [6,0,-6],
-                [7,0,-7],
-                [8,0,-8],
+            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
+                const cells = this.board[goLayer].cells
+                const cell = cells[goFoward][goLR];
                 
-                [-1,0,1],
-                [-2,0,2],
-                [-3,0,3],
-                [-4,0,4],
-                [-5,0,5],
-                [-6,0,6],
-                [-7,0,7],
-                [-8,0,8],
-            
-                [-1,0,-1],
-                [-2,0,-2],
-                [-3,0,-3],
-                [-4,0,-4],
-                [-5,0,-5],
-                [-6,0,-6],
-                [-7,0,-7],
-                [-8,0,-8],
-            ]
-        }
+                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                material.color.set('yellow')
+                cell.canGo = true
+                if(cell.onUnit){
+                    if(cell.onUnitTeam != this.team){
+                        cell.canAttack = true;
+                        material.color.set('red')
+                    }else{
+                        cell.canGo = false;
+                        material.color.set(cell.color)
+                    }
+                }
+                if(cell.canGo){
+                    this.showingCell.push(cell)
+                }
+            }
+        })
     }
 }
 
-
-class King extends Unit{
-    
-    public readonly unitType: piece
-    constructor(
-        team: "white" | "black", // 팀 정보
-        row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
-        layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
-    ){
-        super(team,row, column,layer)
-        this.unitType = "KING"
-        this.move = {
-            always : [
-                [1,0,0],
-                [-1,0,0],
-                [0,0,1],
-                [0,0,-1],
-
-                [1,0,1],
-                [1,0,-1],
-                [-1,0,1],
-                [-1,0,-1]
+class Pawns extends Unit{
+    private wasHandled = false;
+    private config = {
+        moving : {
+            points : [
+                [0,0,1]
             ]
         }
     }
-}
+    private ID:string;
+    constructor(
+        public team: "white" | "black",
+        public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
+        board: Array<Board>
+    ){
+        super(team,row,column,layer, board)
+        this.ID = `${team}_PAWNS_${uuidv4()}`
+    }
 
+    public move(){
+        this.wasHandled = true;
+    }
+
+    public showCanCell(){
+        this.hideCanCell()
+        this.config.moving.points.forEach(goTo => {
+            let goFoward = this.row + goTo[2] -1;
+            let optForward = 0;
+            if(!this.wasHandled ){
+                optForward = goFoward + 1;
+            }
+            let goLR = this.convertCol() + goTo[0] -1;
+            let goLayer = this.layer + goTo[1] -1;
+
+            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= optForward && optForward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
+                const cells = this.board[goLayer].cells
+                const cell = cells[goFoward][goLR];
+                console.log(cells[goFoward][goLR -1].onUnitTeam)
+                if(!cell.onUnit){
+                    let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                    material.color.set('yellow')
+    
+                    this.showingCell.push(cell)
+                }
+
+                if(optForward != 0 && !cells[optForward][goLR].onUnit && !cells[goFoward][goLR].onUnit){
+                    let material2 = cells[optForward][goLR].mesh.material as THREE.MeshBasicMaterial;
+                    material2.color.set('yellow')    
+                    this.showingCell.push(cells[optForward][goLR])
+                }
+                
+                if(cells[goFoward][goLR + 1].onUnit && cells[goFoward][goLR +1].onUnitTeam != this.team){
+                    console.log(this.team, cells[goFoward][goLR -1].onUnitTeam )
+                    let material_onRight= cells[goFoward][goLR + 1].mesh.material as THREE.MeshBasicMaterial
+                    material_onRight.color.set('red')
+                    cells[optForward][goLR - 1].canAttack = true;
+                    cells[optForward][goLR - 1].canGo = true;
+                    this.showingCell.push(cells[optForward][goLR + 1])
+                }
+                if(cells[goFoward][goLR - 1].onUnit && cells[goFoward][goLR -1].onUnitTeam != this.team){
+                    let material_onLeft= cells[goFoward][goLR - 1].mesh.material as THREE.MeshBasicMaterial
+                    material_onLeft.color.set('red')
+                    
+                    cells[optForward][goLR - 1].canAttack = true;
+                    cells[optForward][goLR - 1].canGo = true;
+                    this.showingCell.push(cells[optForward][goLR - 1])
+                }
+                
+            }
+        })
+    }
+
+}
 ////////////////////////////////////////////////////////
 
 interface space {
@@ -560,7 +851,7 @@ class Space implements space {
 
     constructor() {
         let cellID = 1;
-        let isWhite = true;
+        let isWhite = false;
         const Boards = [];
 
         for (let layer = 1; layer <= 8; layer++) {
@@ -614,9 +905,13 @@ function ThreeBoard({spaceRef} : {spaceRef: React.MutableRefObject<Space | null>
         spaceRef.current = gameSpace;
         gameSpace.addToScene(scene);
 
+
+
         ////////////////////////////////
-        const KnightTestUnit = new Pawns("white", 4,"d", 8)
-        KnightTestUnit.showCanCell(gameSpace.boards)
+        
+        const testRookUnit = new King("black", 5, "b", 8, gameSpace.boards);
+        const KnightTestUnit = new Queen("white", 5,"g", 8, gameSpace.boards)
+        KnightTestUnit.showCanCell()
         ////////////////////////////////////////
 
 
@@ -660,7 +955,7 @@ function ThreeBoard({spaceRef} : {spaceRef: React.MutableRefObject<Space | null>
         document.addEventListener("mousedown", clickHandler);
         document.addEventListener("contextmenu", disableContextMenu);
 
-        camera.position.set(35, 35, 35);
+        camera.position.set(0,50,0);
         camera.lookAt(0, 0, 0);
 
         return () => {
