@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
 function ClickableCube() {

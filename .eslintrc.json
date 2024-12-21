@@ -1,3 +1,6 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules" : {
+    "@typescript-eslint/no-explicit-any": "off", // 이 줄을 추가하여 `any` 사용을 허용
+  }
 }
