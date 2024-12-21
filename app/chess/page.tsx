@@ -247,16 +247,16 @@ abstract class Unit{ // == piece ( 체스 기물 )
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        let onceX = ( this.convertCol() - cell.getCol() ) / 30;
-        let onceY = ( this.layer - cell.layer ) / 30;
-        let onceZ = ( this.row - cell.row ) / 30;
+        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
+        const onceY = ( this.layer - cell.layer ) / 30;
+        const onceZ = ( this.row - cell.row ) / 30;
 
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
         
-        let animeId = setInterval(() => {
+        const animeId = setInterval(() => {
             this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
             this.model.position.setY(this.model.position.y + onceY * mapConfig.cellSize.Gap - 0.0745)
             this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
@@ -765,8 +765,8 @@ class Rooks extends Unit {
         const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 7; i++){    //foward
             if(1 <= this.row + i && this.row + i <= 8){
-                let cell = cells[this.row + i - 1][this.convertCol() - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -793,8 +793,8 @@ class Rooks extends Unit {
 
         for(let i = 1; i <= 7; i++){    //backward
             if(1 <= this.row - i && this.row - i <= 8){
-                let cell = cells[this.row - i - 1][this.convertCol() - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -821,8 +821,8 @@ class Rooks extends Unit {
 
         for(let i = 1; i <= 7; i++){    //left
             if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
-                let cell = cells[this.row - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -849,8 +849,8 @@ class Rooks extends Unit {
 
         for(let i = 1; i <= 7; i++){    //right
             if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
-                let cell = cells[this.row - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -937,15 +937,15 @@ class King extends Unit{
     public showCanCell(): void {
         this.hideCanCell()
         this.config.moving.points.forEach(goTo => {
-            let goFoward = this.row + goTo[2] -1;
-            let goLR = this.convertCol() + goTo[0] -1;
-            let goLayer = this.layer + goTo[1] -1;
+            const goFoward = this.row + goTo[2] -1;
+            const goLR = this.convertCol() + goTo[0] -1;
+            const goLayer = this.layer + goTo[1] -1;
 
             if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
                 const cells = this.board[goLayer].cells
                 const cell = cells[goFoward][goLR];
                 
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit){
@@ -1030,15 +1030,15 @@ class Knights extends Unit{
     public showCanCell(): void {
         this.hideCanCell()
         this.config.moving.points.forEach(goTo => {
-            let goFoward = this.row + goTo[2] -1;
-            let goLR = this.convertCol() + goTo[0] -1;
-            let goLayer = this.layer + goTo[1] -1;
+            const goFoward = this.row + goTo[2] -1;
+            const goLR = this.convertCol() + goTo[0] -1;
+            const goLayer = this.layer + goTo[1] -1;
 
             if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
                 const cells = this.board[goLayer].cells
                 const cell = cells[goFoward][goLR];
                 
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true
                 if(cell.onUnit){
@@ -1117,8 +1117,8 @@ class Pawns extends Unit{
             if(!this.wasHandled ){
                 optForward = goForward + 1;
             }
-            let goLR = this.convertCol() + goTo[0] -1;
-            let goLayer = this.layer + goTo[1] -1;
+            const goLR = this.convertCol() + goTo[0] -1;
+            const goLayer = this.layer + goTo[1] -1;
             if(this.team == 'black'){
                 goForward = this.row - goTo[2] -1;
                 if(!this.wasHandled ){
@@ -1130,7 +1130,7 @@ class Pawns extends Unit{
                 const cells = this.board[goLayer].cells
                 const cell = cells[goForward][goLR];
                 if(!cell.onUnit){
-                    let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                    const material = cell.mesh.material as THREE.MeshBasicMaterial;
                     material.color.set('yellow')
                     material.transparent = true;
                     cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
@@ -1139,7 +1139,7 @@ class Pawns extends Unit{
                 }
 
                 if(optForward != 0 && !cells[optForward][goLR].onUnit && !cells[goForward][goLR].onUnit){
-                    let material2 = cells[optForward][goLR].mesh.material as THREE.MeshBasicMaterial;
+                    const material2 = cells[optForward][goLR].mesh.material as THREE.MeshBasicMaterial;
                     material2.color.set('yellow')
                     material2.transparent = true;
                     cells[optForward][goLR].normalOpacity = material2.opacity = cells[optForward][goLR].color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
@@ -1149,7 +1149,7 @@ class Pawns extends Unit{
                 
                 if(goLR != 7){
                     if(cells[goForward][goLR + 1].onUnit && cells[goForward][goLR +1].onUnitTeam != this.team){
-                        let material_onRight= cells[goForward][goLR + 1].mesh.material as THREE.MeshBasicMaterial
+                        const material_onRight= cells[goForward][goLR + 1].mesh.material as THREE.MeshBasicMaterial
                         material_onRight.color.set('red')
                         material_onRight.transparent = true;
                         cells[goForward][goLR + 1].normalOpacity = material_onRight.opacity = cells[goForward][goLR + 1].color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
@@ -1161,7 +1161,7 @@ class Pawns extends Unit{
                 }
                 if(goLR != 0){
                     if(cells[goForward][goLR - 1].onUnit && cells[goForward][goLR -1].onUnitTeam != this.team){
-                        let material_onLeft= cells[goForward][goLR - 1].mesh.material as THREE.MeshBasicMaterial
+                        const material_onLeft= cells[goForward][goLR - 1].mesh.material as THREE.MeshBasicMaterial
                         material_onLeft.color.set('red')
                         material_onLeft.transparent = true;
                         cells[goForward][goLR - 1].normalOpacity = material_onLeft.opacity = cells[goForward][goLR - 1].color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
