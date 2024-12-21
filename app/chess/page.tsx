@@ -189,7 +189,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
     public abstract addToScene(scene: THREE.Scene):void;
 
     public unitUp(){
-        let animeId = setInterval(() => {
+        const animeId = setInterval(() => {
             this.model.position.setY(this.model.position.y + 0.2)
         },10)
         setTimeout(() => {
@@ -200,7 +200,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
     public unitDown(){
         this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35 + 0.01 + 3, this.row * -mapConfig.cellSize.y + 22.5)
         let tempCount = 3;
-        let animeId = setInterval(() => {
+        const animeId = setInterval(() => {
             this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 35 + 0.01 + tempCount)
             tempCount -= 0.2
         },10)
@@ -211,7 +211,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     public hideCanCell(){
         this.showingCell.forEach(cell => {
-            let tempMaterial = cell.mesh.material as THREE.MeshBasicMaterial;
+            const tempMaterial = cell.mesh.material as THREE.MeshBasicMaterial;
             cell.canGo = false;
             cell.canAttack = false;
             cell.normalOpacity = colorConfig.opacity.normal;
@@ -341,8 +341,8 @@ class Queen extends Unit {
         const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 7; i++){    //foward
             if(1 <= this.row + i && this.row + i <= 8){
-                let cell = cells[this.row + i - 1][this.convertCol() - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -370,8 +370,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    //backward
             if(1 <= this.row - i && this.row - i <= 8){
-                let cell = cells[this.row - i - 1][this.convertCol() - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -398,8 +398,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    //left
             if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
-                let cell = cells[this.row - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                    
                 cell.canGo = true;
@@ -427,8 +427,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    //right
             if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
-                let cell = cells[this.row - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -454,8 +454,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 우 상향
             if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
-                let cell = cells[this.row + i - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -482,8 +482,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 우 하향
             if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
-                let cell = cells[this.row - i - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -510,8 +510,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 좌 상향
             if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
-                let cell = cells[this.row + i - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -537,8 +537,8 @@ class Queen extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 좌 하향
             if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
-                let cell = cells[this.row - i - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -610,8 +610,8 @@ class Bishops extends Unit {
         const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 7; i++){    // 우 상향
             if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
-                let cell = cells[this.row + i - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -638,8 +638,8 @@ class Bishops extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 우 하향
             if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() + i && this.convertCol() + i <= 8)){
-                let cell = cells[this.row - i - 1][this.convertCol() + i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() + i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -666,8 +666,8 @@ class Bishops extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 좌 상향
             if((1 <= this.row + i && this.row + i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
-                let cell = cells[this.row + i - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row + i - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
@@ -693,8 +693,8 @@ class Bishops extends Unit {
 
         for(let i = 1; i <= 7; i++){    // 좌 하향
             if((1 <= this.row - i && this.row - i <= 8 ) && (1 <= this.convertCol() - i && this.convertCol() - i <= 8)){
-                let cell = cells[this.row - i - 1][this.convertCol() - i - 1];
-                let material = cell.mesh.material as THREE.MeshBasicMaterial;
+                const cell = cells[this.row - i - 1][this.convertCol() - i - 1];
+                const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
                 if(cell.onUnit) {
