@@ -1,5 +1,5 @@
 'use client'
-import styles from '../public/css/chess.module.css'
+import styles from '../../public/css/chess.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -7,6 +7,22 @@ import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
+
+const colorConfig = {
+    opacity : {
+        black : 0.9,
+        white : 0.4,
+        normal : 1
+    }
+}
+
+const mapConfig = {
+    cellSize : {
+        x : 5,
+        y : 5,
+        Gap : 7
+    }
+}
 
 type piece = "KING" | "QUEEN" | "ROOKS" | "BISHOPS" | "KNIGHTS" | "PAWNS" | "NONE";
 
@@ -23,6 +39,7 @@ interface cell {
     onUnitTeam: "white" | "black" | "none"
     canAttack: boolean
     canGo: boolean
+    normalOpacity :number
 }
 
 class Cell implements cell{
@@ -33,6 +50,7 @@ class Cell implements cell{
     public canAttack;
     public canGo;
     public onUnitTeam: "white" | "black" | "none";
+    public normalOpacity:number
 
     constructor(
         public piece : piece,
@@ -74,7 +92,7 @@ class Cell implements cell{
             this.color = "black";
         }
 
-        const geometry = new THREE.PlaneGeometry(5, 5);
+        const geometry = new THREE.PlaneGeometry(mapConfig.cellSize.x, mapConfig.cellSize.y);
         const material = new THREE.MeshBasicMaterial({
             color: this.color,
             side: THREE.DoubleSide,
@@ -83,9 +101,9 @@ class Cell implements cell{
 
         this.mesh.rotation.x = Math.PI / 2;
         this.mesh.position.set(
-            this.getCol() * 5 - 22.5,
-            this.layer * 7 - 35,
-            this.row * -5 + 22.5  
+            this.getCol() * mapConfig.cellSize.x - 22.5,
+            this.layer * mapConfig.cellSize.Gap - 35,
+            this.row * -mapConfig.cellSize.y + 22.5  
         );
 
         // 셀 데이터를 메쉬에 저장
@@ -95,6 +113,7 @@ class Cell implements cell{
         this.canAttack = false;
         this.canGo = false;
         this.onUnitTeam = "none"
+        this.normalOpacity = colorConfig.opacity.normal
     }
 
     getCol(){
@@ -126,7 +145,7 @@ class Cell implements cell{
         this.visible = visible;
         const material = this.mesh.material as THREE.MeshBasicMaterial;
         material.transparent = true;
-        material.opacity = visible ? 1 : 0.1; // 투명도 설정
+        material.opacity = visible ? this.normalOpacity : 0.1; // 투명도 설정
     }
 }
 
@@ -148,29 +167,31 @@ class Board implements board{
 abstract class Unit{ // == piece ( 체스 기물 )
     public death:boolean;
     protected showingCell:Array<Cell> = []
+    public model:THREE.Group;
     constructor(
         public team: "white" | "black",
         public row: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-        public board:Array<Board>
+        public board:Array<Board>,
+        public piece:piece
     ){
         this.death = false;
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnit = true;
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnitTeam = team
+        board[layer - 1].cells[row - 1][this.convertCol() - 1].piece = piece
+        this.model = new THREE.Group()
     }
     
-    protected abstract showCanCell():void;
-    
+    public abstract showCanCell():void;
+    public abstract addToScene(scene: THREE.Scene):void;
+
     public hideCanCell(){
         this.showingCell.forEach(cell => {
             let tempMaterial = cell.mesh.material as THREE.MeshBasicMaterial;
             tempMaterial.color.set(`${cell.color}`)
         })
         this.showingCell = [];
-    }
-    public addToScene(scene:THREE.Scene){
-        //scene.add()    
     }
 
     public move(){
@@ -212,10 +233,38 @@ class Queen extends Unit {
         board: Array<Board>
     ){
         
-        super(team,row,column,layer, board)
+        super(team,row,column,layer, board, "QUEEN")
         this.ID = `${team}_BISHOPS_${uuidv4()}`
+        
     }
-    
+
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+                this.model.userData.type = 'units'
+                this.model.userData.unit = this
+                scene.add(this.model)
+            }
+        )
+    }
+
     public showCanCell(): void {
         this.hideCanCell()
         const cells = this.board[this.layer - 1].cells
@@ -228,7 +277,10 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;                           
+                        
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -236,7 +288,9 @@ class Queen extends Unit {
                     }
                     break;
                 }
-                if(cell.canGo){                
+                if(cell.canGo){       
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ?colorConfig.opacity.black : colorConfig.opacity.white;              
                     this.showingCell.push(cell)
                 }
 
@@ -252,15 +306,19 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')     
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
-                        cell.canGo = false;
+                        cell.canGo = false;       
                         material.color.set(cell.color)
                     }
                     break;
                 }
-                if(cell.canGo){                
+                if(cell.canGo){       
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -272,19 +330,24 @@ class Queen extends Unit {
                 let cell = cells[this.row - 1][this.convertCol() - i - 1];
                 let material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
+                   
                 cell.canGo = true;
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
-                        cell.canGo = false;
+                        cell.canGo = false;       
                         material.color.set(cell.color)
                     }
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
                 
@@ -300,7 +363,9 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -308,7 +373,9 @@ class Queen extends Unit {
                     }
                     break;
                 }
-                if(cell.canGo){                
+                if(cell.canGo){         
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -323,7 +390,9 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -332,6 +401,8 @@ class Queen extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -347,7 +418,9 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -356,6 +429,8 @@ class Queen extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -371,7 +446,9 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
-                        material.color.set('red')                        
+                        material.color.set('red')
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -379,7 +456,9 @@ class Queen extends Unit {
                     }
                     break;
                 }
-                if(cell.canGo){                
+                if(cell.canGo){
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -394,6 +473,8 @@ class Queen extends Unit {
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         material.color.set('red')                        
                         this.showingCell.push(cell)
                     }else{
@@ -402,7 +483,9 @@ class Queen extends Unit {
                     }
                     break;
                 }
-                if(cell.canGo){                
+                if(cell.canGo){           
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -420,11 +503,37 @@ class Bishops extends Unit {
         public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         board: Array<Board>
-    ){
-        
-        super(team,row,column,layer, board)
+    ){        
+        super(team,row,column,layer, board, "BISHOPS")
         this.ID = `${team}_BISHOPS_${uuidv4()}`
     }
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+                this.model.userData.type = 'units'
+                this.model.userData.unit = this
+                scene.add(this.model)
+            }
+        )
+    }
+
     public showCanCell(): void {
         this.hideCanCell()
         const cells = this.board[this.layer - 1].cells
@@ -438,6 +547,8 @@ class Bishops extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -446,6 +557,8 @@ class Bishops extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -462,6 +575,8 @@ class Bishops extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -470,6 +585,8 @@ class Bishops extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -486,6 +603,8 @@ class Bishops extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -494,6 +613,8 @@ class Bishops extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -509,6 +630,8 @@ class Bishops extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -517,6 +640,8 @@ class Bishops extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -535,10 +660,35 @@ class Rooks extends Unit {
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         board: Array<Board>
     ){
-        
-        super(team,row,column,layer, board)
+        super(team,row,column,layer, board, "ROOKS")
         this.ID = `${team}_ROOKS_${uuidv4()}`
     }
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+    
+                scene.add(this.model)
+            }
+        )
+    }
+
     public showCanCell(): void {
         this.hideCanCell()
         const cells = this.board[this.layer - 1].cells
@@ -552,6 +702,8 @@ class Rooks extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -560,6 +712,8 @@ class Rooks extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -576,6 +730,8 @@ class Rooks extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -584,6 +740,8 @@ class Rooks extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
 
@@ -600,6 +758,8 @@ class Rooks extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -608,6 +768,8 @@ class Rooks extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
                 
@@ -624,6 +786,8 @@ class Rooks extends Unit {
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
                         material.color.set('red')                        
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         this.showingCell.push(cell)
                     }else{
                         cell.canGo = false;
@@ -632,6 +796,8 @@ class Rooks extends Unit {
                     break;
                 }
                 if(cell.canGo){                
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -667,8 +833,34 @@ class King extends Unit{
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         board: Array<Board>
     ){
-        super(team,row,column,layer, board)
+        super(team,row,column,layer, board, "KING")
         this.ID = `${team}_KING_${uuidv4()}`
+    }
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+                this.model.userData.type = 'units'
+                this.model.userData.unit = this
+                scene.add(this.model)
+            }
+        )
     }
 
     public showCanCell(): void {
@@ -688,6 +880,8 @@ class King extends Unit{
                 if(cell.onUnit){
                     if(cell.onUnitTeam != this.team){                    
                         cell.canAttack = true;
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         material.color.set('red')
                     }else{
                         cell.canGo = false;
@@ -695,6 +889,8 @@ class King extends Unit{
                     }
                 }
                 if(cell.canGo){
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -730,8 +926,34 @@ class Knights extends Unit{
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         board: Array<Board>
     ){
-        super(team,row,column,layer, board)
+        super(team,row,column,layer, board, "KNIGHTS")
         this.ID = `${team}_KNIGHTS_${uuidv4()}`
+    }
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+                this.model.userData.type = 'units'
+                this.model.userData.unit = this
+                scene.add(this.model)
+            }
+        )
     }
 
     public showCanCell(): void {
@@ -751,6 +973,8 @@ class Knights extends Unit{
                 if(cell.onUnit){
                     if(cell.onUnitTeam != this.team){
                         cell.canAttack = true;
+                        material.transparent = true;
+                        cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                         material.color.set('red')
                     }else{
                         cell.canGo = false;
@@ -758,6 +982,8 @@ class Knights extends Unit{
                     }
                 }
                 if(cell.canGo){
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
                     this.showingCell.push(cell)
                 }
             }
@@ -782,8 +1008,34 @@ class Pawns extends Unit{
         public layer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
         board: Array<Board>
     ){
-        super(team,row,column,layer, board)
+        super(team,row,column,layer, board, "PAWNS")
         this.ID = `${team}_PAWNS_${uuidv4()}`
+    }
+
+    public addToScene(scene: THREE.Scene): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/3D/chess.gltf',
+            (gltf) => {
+                this.model = gltf.scene;
+                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -22.5,this.layer * mapConfig.cellSize.Gap - 35, this.row * -mapConfig.cellSize.y + 22.5)
+                this.model.scale.set(0.01, 0.01, 0.01);
+                this.model.rotateX(-Math.PI / 2)
+                this.model.rotateZ(Math.PI / 2)
+                if(this.team == 'black'){
+                    this.model.rotateZ(Math.PI)
+                }
+                this.model.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.userData.type = 'units'; // 타입 설정
+                        child.userData.unit = this;    // 현재 유닛 객체 저장
+                    }
+                });
+                this.model.userData.type = 'units'
+                this.model.userData.unit = this
+                scene.add(this.model)
+            }
+        )
     }
 
     public move(){
@@ -793,48 +1045,66 @@ class Pawns extends Unit{
     public showCanCell(){
         this.hideCanCell()
         this.config.moving.points.forEach(goTo => {
-            let goFoward = this.row + goTo[2] -1;
+            
+            let goForward = this.row + goTo[2] -1;
             let optForward = 0;
             if(!this.wasHandled ){
-                optForward = goFoward + 1;
+                optForward = goForward + 1;
             }
             let goLR = this.convertCol() + goTo[0] -1;
             let goLayer = this.layer + goTo[1] -1;
-
-            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= optForward && optForward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
+            if(this.team == 'black'){
+                goForward = this.row - goTo[2] -1;
+                if(!this.wasHandled ){
+                    optForward = goForward - 1;
+                }
+            }
+                
+            if(( 0 <= goForward && goForward <= 7) && ( 0 <= optForward && optForward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 7)){
                 const cells = this.board[goLayer].cells
-                const cell = cells[goFoward][goLR];
-                console.log(cells[goFoward][goLR -1].onUnitTeam)
+                const cell = cells[goForward][goLR];
                 if(!cell.onUnit){
                     let material = cell.mesh.material as THREE.MeshBasicMaterial;
                     material.color.set('yellow')
-    
+                    material.transparent = true;
+                    cell.normalOpacity = material.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
+                    cell.canGo = true;
                     this.showingCell.push(cell)
                 }
 
-                if(optForward != 0 && !cells[optForward][goLR].onUnit && !cells[goFoward][goLR].onUnit){
+                if(optForward != 0 && !cells[optForward][goLR].onUnit && !cells[goForward][goLR].onUnit){
                     let material2 = cells[optForward][goLR].mesh.material as THREE.MeshBasicMaterial;
-                    material2.color.set('yellow')    
+                    material2.color.set('yellow')
+                    material2.transparent = true;
+                    cells[optForward][goLR].normalOpacity = material2.opacity = cell.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
+                    cells[optForward][goLR].canGo = true;    
                     this.showingCell.push(cells[optForward][goLR])
                 }
                 
-                if(cells[goFoward][goLR + 1].onUnit && cells[goFoward][goLR +1].onUnitTeam != this.team){
-                    console.log(this.team, cells[goFoward][goLR -1].onUnitTeam )
-                    let material_onRight= cells[goFoward][goLR + 1].mesh.material as THREE.MeshBasicMaterial
-                    material_onRight.color.set('red')
-                    cells[optForward][goLR - 1].canAttack = true;
-                    cells[optForward][goLR - 1].canGo = true;
-                    this.showingCell.push(cells[optForward][goLR + 1])
+                if(goLR != 7){
+                    if(cells[goForward][goLR + 1].onUnit && cells[goForward][goLR +1].onUnitTeam != this.team){
+                        let material_onRight= cells[goForward][goLR + 1].mesh.material as THREE.MeshBasicMaterial
+                        material_onRight.color.set('red')
+                        material_onRight.transparent = true;
+                        cells[goForward][goLR + 1].normalOpacity = material_onRight.opacity = cells[goForward][goLR + 1].color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
+                        
+                        cells[goForward][goLR - 1].canAttack = true;
+                        cells[goForward][goLR - 1].canGo = true;
+                        this.showingCell.push(cells[goForward][goLR + 1])
+                    }
                 }
-                if(cells[goFoward][goLR - 1].onUnit && cells[goFoward][goLR -1].onUnitTeam != this.team){
-                    let material_onLeft= cells[goFoward][goLR - 1].mesh.material as THREE.MeshBasicMaterial
-                    material_onLeft.color.set('red')
-                    
-                    cells[optForward][goLR - 1].canAttack = true;
-                    cells[optForward][goLR - 1].canGo = true;
-                    this.showingCell.push(cells[optForward][goLR - 1])
+                if(goLR != 0){
+                    if(cells[goForward][goLR - 1].onUnit && cells[goForward][goLR -1].onUnitTeam != this.team){
+                        let material_onLeft= cells[goForward][goLR - 1].mesh.material as THREE.MeshBasicMaterial
+                        material_onLeft.color.set('red')
+                        material_onLeft.transparent = true;
+                        cells[goForward][goLR - 1].normalOpacity = material_onLeft.opacity = cells[goForward][goLR - 1].color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white;
+                        
+                        cells[goForward][goLR - 1].canAttack = true;
+                        cells[goForward][goLR - 1].canGo = true;
+                        this.showingCell.push(cells[goForward][goLR - 1])
+                    }
                 }
-                
             }
         })
     }
@@ -897,23 +1167,57 @@ class Space implements space {
     }
 }
 
+const myUnits:any = []
+const myTeam: "white" | "black" = 'white'
+let selUnit:Unit;
 function ThreeBoard({spaceRef} : {spaceRef: React.MutableRefObject<Space | null>}) {
     const { scene, camera } = useThree();
+
+    const chageNumToCol = (columnNum:number) => {
+        switch(columnNum){
+            case 1:
+                return "a";
+            case 2:
+                return "b";
+            case 3:
+                return "c"
+            case 4:
+                return "d"
+            case 5:
+                return "e"
+            case 6:
+                return "f"
+            case 7:
+                return "g"
+            default:
+                return "h"
+        }
+    }
 
     useEffect(() => {
         const gameSpace = new Space();
         spaceRef.current = gameSpace;
         gameSpace.addToScene(scene);
 
+        const initGame = () =>{
+            for(let i = 1; i <= 8; i++){
+                myUnits.push(new Pawns(myTeam, 2, chageNumToCol(i), 8, gameSpace.boards))
+            }
+            myUnits.push(new Rooks(myTeam, 1, "a", 8, gameSpace.boards))
+            myUnits.push(new Knights(myTeam, 1, "b", 8, gameSpace.boards))
+            myUnits.push(new Bishops(myTeam, 1, "c", 8, gameSpace.boards))
+            myUnits.push(new King(myTeam, 1, "d", 8, gameSpace.boards))
+            myUnits.push(new Queen(myTeam, 1, "e", 8, gameSpace.boards))
+            myUnits.push(new Bishops(myTeam, 1, "f", 8, gameSpace.boards))
+            myUnits.push(new Knights(myTeam, 1, "g", 8, gameSpace.boards))
+            myUnits.push(new Rooks(myTeam, 1, "h", 8, gameSpace.boards))
 
+            myUnits.forEach((unit: any) => {
+                unit.addToScene(scene)
+            })
+        }
 
-        ////////////////////////////////
-        
-        const testRookUnit = new King("black", 5, "b", 8, gameSpace.boards);
-        const KnightTestUnit = new Queen("white", 5,"g", 8, gameSpace.boards)
-        KnightTestUnit.showCanCell()
-        ////////////////////////////////////////
-
+        initGame()
 
         const clickHandler = (event: MouseEvent) => {
             const mouse = new THREE.Vector2();
@@ -928,7 +1232,11 @@ function ThreeBoard({spaceRef} : {spaceRef: React.MutableRefObject<Space | null>
             if (intersects.length > 0) {
                 if(event.button == 0) {//좌클릭
                     for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData?.cell instanceof Cell){
+                        console.log(intersects[i].object.userData)
+                        if(intersects[i].object.userData.type == 'units' ){
+                            console.log(intersects[i].object.userData.unit)
+                            const unit = intersects[i].object.userData.unit.showCanCell()
+                        }else if(intersects[i].object.userData?.cell instanceof Cell){
                             const cellData: Cell = intersects[i].object.userData.cell;
                             console.log(cellData)
                             if(cellData.visible){
@@ -950,10 +1258,10 @@ function ThreeBoard({spaceRef} : {spaceRef: React.MutableRefObject<Space | null>
                 }
             }
         };
-        const disableContextMenu = (event: MouseEvent) => event.preventDefault();
+        //const disableContextMenu = (event: MouseEvent) => event.preventDefault();
 
         document.addEventListener("mousedown", clickHandler);
-        document.addEventListener("contextmenu", disableContextMenu);
+        //document.addEventListener("contextmenu", disableContextMenu);
 
         camera.position.set(0,50,0);
         camera.lookAt(0, 0, 0);
@@ -996,14 +1304,14 @@ export default function Chess(){
                     mouseButtons={{
                         LEFT: THREE.MOUSE.LEFT,
                         MIDDLE: THREE.MOUSE.MIDDLE,
-                        RIGHT: undefined, // 우클릭 방지
+                        RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
                     }}
                 />
                 <ThreeBoard spaceRef={spaceRef} />
             
             </Canvas>
             <div className={styles.UI}>
-                         <input
+                    <input
                         type="checkbox"
                         checked={visible}
                         onChange={(e) => setVisible(e.target.checked)}
