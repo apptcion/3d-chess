@@ -117,13 +117,6 @@ class Cell implements cell{
             opacity : 0.1
         })
 
-        const cubeBottomMaterial = new THREE.MeshBasicMaterial({
-            color : this.color,
-            side : THREE.DoubleSide,
-            transparent : true,
-            opacity : colorConfig.opacity.normal
-        })
-
         const cubeSideGeometry = new THREE.BoxGeometry(
             mapConfig.cellSize.x,
             mapConfig.cellSize.Gap - 1,
@@ -587,7 +580,7 @@ class Queen extends Unit {
             }
         }
 
-        {// X + Y
+        // X + Y
             for(let i = 1; i <= 8; i++){// 좌 상향
                 if(this.row + i <= 8 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
@@ -636,8 +629,8 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-        }
-        { // X + Z
+        
+         // X + Z
             for(let i = 1; i <= 3; i++){ // 우 상향
                 if(this.layer + i <= 3 && this.convertCol() + i <= 8){
                     const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
@@ -689,8 +682,8 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
-        {// Y + Z
+        
+        // Y + Z
             for(let i = 1; i <= 3; i++){ // 우 상향
                 if(this.layer + i <= 3 && this.row + i <= 8){
                     const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
@@ -742,8 +735,8 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
-        {//3차원
+        
+        //3차원
             for(let i = 1; i <= 3; i++){//  + + +
                 if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() + i <= 8){
                     const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
@@ -844,7 +837,7 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
+        
     }
 }
 
@@ -886,7 +879,7 @@ class Bishops extends Unit {
 
     public showCanCell(): void {
         this.hideCanCell()
-        {// X + Y
+        // X + Y
             for(let i = 1; i <= 8; i++){// 좌 상향
                 if(this.row + i <= 8 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
@@ -935,8 +928,8 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-        }
-        {//3차원
+        
+        //3차원
             for(let i = 1; i <= 3; i++){//  + + +
                 if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() + i <= 8){
                     const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
@@ -1037,7 +1030,7 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
+        
         
     }
 }

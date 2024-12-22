@@ -108,13 +108,6 @@ class Cell implements cell{
             opacity : 0.1
         })
 
-        const cubeBottomMaterial = new THREE.MeshBasicMaterial({
-            color : this.color,
-            side : THREE.DoubleSide,
-            transparent : true,
-            opacity : colorConfig.opacity.normal
-        })
-
         const cubeSideGeometry = new THREE.BoxGeometry(
             mapConfig.cellSize.x,
             mapConfig.cellSize.Gap - 1,
@@ -420,7 +413,7 @@ class Queen extends Unit {
 
     public showCanCell(): void {
         this.hideCanCell()
-        {// X + Y
+        // X + Y
             for(let i = 1; i <= 5; i++){// 좌 상향
                 if(this.row + i <= 5 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
@@ -469,8 +462,8 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-        }
-        { // X + Z
+        
+         // X + Z
             for(let i = 1; i <= 5; i++){ // 우 상향
                 if(this.layer + i <= 5 && this.convertCol() + i <= 5){
                     const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
@@ -522,8 +515,8 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
-        {// Y + Z
+        
+        // Y + Z
             for(let i = 1; i <= 5; i++){ // 우 상향
                 if(this.layer + i <= 5 && this.row + i <= 5){
                     const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
@@ -575,7 +568,7 @@ class Queen extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
+        
 
         const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 5; i++){    //foward
@@ -861,7 +854,7 @@ class Bishops extends Unit {
 
     public showCanCell(): void {
         this.hideCanCell()
-        {// X + Y
+        // X + Y
             for(let i = 1; i <= 5; i++){// 좌 상향
                 if(this.row + i <= 5 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
@@ -910,8 +903,8 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-        }
-        { // X + Z
+        
+         // X + Z
             for(let i = 1; i <= 5; i++){ // 우 상향
                 if(this.layer + i <= 5 && this.convertCol() + i <= 5){
                     const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
@@ -963,8 +956,8 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
-        {// Y + Z
+        
+        // Y + Z
             for(let i = 1; i <= 5; i++){ // 우 상향
                 if(this.layer + i <= 5 && this.row + i <= 5){
                     const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
@@ -1016,7 +1009,7 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-        }
+        
     }
 }
 

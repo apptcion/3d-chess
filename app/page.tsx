@@ -17,7 +17,8 @@ export default function Home() {
           <li>
             Get started by editing <code>app/page.tsx</code>.<br />
             <a href="/chess">/chess</a> <br />
-            <a href="/Raumschach">/Raumschach</a>
+            <a href="/Raumschach">/Raumschach</a><br />
+            <a href="/Millennium">/Millennium</a>
           </li>
           <li>Save and see your changes instantly.</li>
         </ol>
