@@ -34,7 +34,8 @@ interface cell {
     layer: 1 | 2 | 3 | 4 | 5;
     ID: number
     visible: boolean
-    mesh : THREE.Mesh
+    mesh : THREE.Mesh,
+    cubeMesh : THREE.Mesh,
     onUnit: boolean
     onUnitTeam: "white" | "black" | "none"
     canAttack: boolean
@@ -46,6 +47,7 @@ class Cell implements cell{
     public column: "a" | "b" | "c" | "d" | "e" ;
     public readonly color: "white" | "black";
     public mesh: THREE.Mesh; 
+    public cubeMesh: THREE.Mesh;
     public onUnit;
     public canAttack;
     public canGo;
@@ -83,7 +85,7 @@ class Cell implements cell{
             this.color = "black";
         }
 
-        const geometry = new THREE.PlaneGeometry(mapConfig.cellSize.x, mapConfig.cellSize.y);
+        const geometry = new THREE.BoxGeometry(mapConfig.cellSize.x, mapConfig.cellSize.y);
         const material = new THREE.MeshBasicMaterial({
             color: this.color,
             side: THREE.DoubleSide,
@@ -92,9 +94,41 @@ class Cell implements cell{
 
         this.mesh.rotation.x = Math.PI / 2;
         this.mesh.position.set(
-            this.getCol() * mapConfig.cellSize.x - 15,
+            (this.getCol()*1.001) * mapConfig.cellSize.x - 15,
             this.layer * mapConfig.cellSize.Gap - 35,
-            this.row * -mapConfig.cellSize.y + 15  
+            (this.row*1.001) * -mapConfig.cellSize.y + 15  
+        );
+
+        // CubeMesh
+
+        const cubeMaterial = new THREE.MeshBasicMaterial({
+            color : this.color,
+            side : THREE.DoubleSide,
+            transparent : true,
+            opacity : 1,
+        })
+        const cubeBottomGeometry = new THREE.PlaneGeometry(
+            mapConfig.cellSize.x,
+            mapConfig.cellSize.y
+        )
+        const cubeBottom = new THREE.Mesh(cubeBottomGeometry, cubeMaterial)
+
+        cubeMaterial.opacity = 0.6
+
+        const cubeSideGeometry = new THREE.BoxGeometry(
+            mapConfig.cellSize.x,
+            mapConfig.cellSize.Gap - 1.001,
+            mapConfig.cellSize.y
+        )
+
+        const cubeSide = new THREE.Mesh(cubeSideGeometry, cubeMaterial)
+
+        this.cubeMesh = cubeSide
+
+        this.cubeMesh.position.set(
+            (this.getCol()*1.001) * mapConfig.cellSize.x - 15,
+            this.layer * mapConfig.cellSize.Gap - 31.51,
+            (this.row*1.001) * -mapConfig.cellSize.y + 15  
         );
 
         // 셀 데이터를 메쉬에 저장
@@ -122,7 +156,13 @@ class Cell implements cell{
         }
     }
 
-    addToScene(scene: THREE.Scene) {
+    addToScene(scene: THREE.Scene, wallVisible:boolean) {
+        console.log("wall to ",wallVisible)
+        if(wallVisible){
+            scene.add(this.cubeMesh)
+        }else{
+            scene.remove(this.cubeMesh)
+        }
         scene.add(this.mesh);
     }
 
@@ -131,6 +171,9 @@ class Cell implements cell{
         const material = this.mesh.material as THREE.MeshBasicMaterial;
         material.transparent = true;
         material.opacity = visible ? this.normalOpacity : 0.1; // 투명도 설정
+
+        const cube_material = this.cubeMesh.material as THREE.MeshBasicMaterial;
+        cube_material.opacity = visible ? this.normalOpacity : 0.1
     }
 
     makeGoCell(showingCell:Array<Cell>){
@@ -1424,7 +1467,7 @@ class Unicorns extends Unit{
         }
 
         for(let i = 1; i <= 5; i++){// - - +
-            if(this.layer - i >= 1 && this.row + i >= 1 && this.convertCol() + i <= 5){
+            if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 5){
                 const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
                 if(cell.onUnit){
                     if(cell.onUnitTeam != this.team){
@@ -1486,7 +1529,9 @@ interface space {
 class Space implements space {
     public readonly boards;
 
-    constructor() {
+    constructor(
+        public scene:THREE.Scene
+    ) {
         let cellID = 1;
         let isWhite = true;
         const Boards = [];
@@ -1511,11 +1556,15 @@ class Space implements space {
         this.boards = Boards;
     }
 
-    public addToScene(scene: THREE.Scene) {
+    public showWall(){
+
+   } 
+
+    public addToScene(wallVisible:boolean) {
         this.boards.forEach(board => {
             board.cells.forEach(rows => {
                 rows.forEach(cell => {
-                    cell.addToScene(scene);
+                    cell.addToScene(this.scene, wallVisible);
                 });
             });
         });
@@ -1538,7 +1587,7 @@ const myTeam: "white" | "black" = 'white'
 let selUnit:unknown = null;
 let updateGame:() => void;
 let clickHandler:(event:MouseEvent) => void;
-function ThreeBoard({spaceRef, turn, setTurn} : {spaceRef: React.MutableRefObject<Space | null>, turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>}) {
+function ThreeBoard({spaceRef, turn, setTurn, wallVisible} : {spaceRef: React.MutableRefObject<Space | null>, turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>, wallVisible:boolean}) {
     const { scene, camera } = useThree();
 
     const changeNumToCol = (columnNum:number) => {
@@ -1559,9 +1608,9 @@ function ThreeBoard({spaceRef, turn, setTurn} : {spaceRef: React.MutableRefObjec
     useEffect(() => {
 
         turn = myTeam;
-        const gameSpace = new Space();
+        const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
-        gameSpace.addToScene(scene);
+        gameSpace.addToScene(wallVisible);
 
         const initGame = () =>{
             for(let i = 1; i <= 5; i++){
@@ -1717,16 +1766,16 @@ export default function Chess(){
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
+    const [wallVisible, setWallVisible] = useState(false)
     const [turn, setTurn] = useState<"white"|"black">(myTeam);
 
     useEffect(() => {
-        console.log("test")
         if(spaceRef.current){
-            console.log("Test")
             spaceRef.current.setAllVisible(visible)
+            spaceRef.current.addToScene(wallVisible)
         }
 
-    },[turn, visible])
+    },[turn, visible, wallVisible])
 
     return (
         <div className={styles.WRAP}>
@@ -1746,21 +1795,38 @@ export default function Chess(){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
+                <mesh position={[0,100,0]} rotation-x={Math.PI * 0.5}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
+                </mesh>
                 
                 <mesh position={[0,-100,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
+                </mesh>
+                <mesh position={[0,-100,0]} rotation-x={-Math.PI * 0.5}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
                 
                 <mesh position={[100,-14,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
+                <mesh position={[100,0,0]} rotation-y={-Math.PI * 0.5}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
+                </mesh>
+
 
                 
                 <mesh position={[-100,-14,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
+                </mesh>
+                <mesh position={[-100,0,0]} rotation-y={Math.PI * 0.5}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
 
                 
@@ -1768,11 +1834,19 @@ export default function Chess(){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
+                <mesh position={[0,0,100]} rotation-y={Math.PI}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
+                </mesh>
 
                 
                 <mesh position={[0,-14,-100]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
+                </mesh>
+                <mesh position={[0,0,-100]}>
+                    <planeGeometry args={[200,200]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
     
                 {/** Code */}
@@ -1783,15 +1857,19 @@ export default function Chess(){
                         RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
                     }}
                 />
-                <ThreeBoard spaceRef={spaceRef} turn={turn} setTurn={setTurn}/>
+                <ThreeBoard spaceRef={spaceRef} turn={turn} setTurn={setTurn} wallVisible={wallVisible}/>
             
             </Canvas>
-            <div className={styles.UI}>
+            <div className={styles.UI} style={{color:'white'}}>
                     <input
                         type="checkbox"
                         checked={visible}
                         onChange={(e) => setVisible(e.target.checked)}
-                    />
+                    /><br />
+                    <div>show Wall <input type="checkbox"
+                        checked={wallVisible}
+                        onChange={(e) => setWallVisible(e.target.checked)}
+                     /> </div>
                     <div id="showTurn">{turn}</div>
             </div>
         </div>
