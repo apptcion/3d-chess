@@ -442,11 +442,6 @@ class Queen extends Unit {
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
-                try{
-                    cell.onUnit
-                }catch{
-                    console.log(cell)
-                }
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.makeAttackCell(this.showingCell)
