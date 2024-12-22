@@ -29,9 +29,9 @@ type piece = "KING" | "QUEEN" | "ROOKS" | "BISHOPS" | "KNIGHTS" | "PAWNS" | "NON
 interface cell {
     readonly color: "white" | "black";
     piece: Unit | null;
-    row: 1 | 2 | 3 | 4 | 5;
-    column: "a" | "b" | "c" | "d" | "e";
-    layer: 1 | 2 | 3 | 4 | 5;
+    row: number;
+    column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
+    layer: number;
     ID: number
     visible: boolean
     mesh : THREE.Mesh,
@@ -44,7 +44,7 @@ interface cell {
 }
 
 class Cell implements cell{
-    public column: "a" | "b" | "c" | "d" | "e" ;
+    public column: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
     public readonly color: "white" | "black";
     public mesh: THREE.Mesh; 
     public cubeMesh: THREE.Mesh;
@@ -56,9 +56,9 @@ class Cell implements cell{
 
     constructor(
         public piece : Unit | null,
-        public row: 1 | 2 | 3 | 4 | 5,
+        public row: number,
         columnNum:number,
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public layer: number,
         color:boolean,
         public ID:number,
         public visible:boolean
@@ -76,8 +76,17 @@ class Cell implements cell{
             case 4:
                 this.column = "d";
                 break;
+            case 5:
+                this.column = "e"
+                break;
+            case 6:
+                this.column = "f"
+                break;
+            case 7:
+                this.column = "g"
+                break;
             default:
-                this.column = "e";
+                this.column = "h";
         }
         if(color){
             this.color = "white";
@@ -154,6 +163,12 @@ class Cell implements cell{
                 return 4;
             case "e":
                 return 5;
+            case "f":
+                return 6;
+            case "g":
+                return 7;
+            default:
+                return 8
         }
     }
 
@@ -229,17 +244,16 @@ class Cell implements cell{
         showingCell.push(this)
     }
 }
-
 interface board {
     readonly cells: Array<Array<Cell>>;
     //layer == index
-    layer : 1 | 2 | 3 | 4 | 5;
+    layer : number;
 }
 
 class Board implements board{
     constructor(
         public cells:Array<Array<Cell>>,
-        public layer: 1 | 2 | 3 | 4 | 5
+        public layer:number
     ){}
 }
 
@@ -252,9 +266,9 @@ abstract class Unit{ // == piece ( 체스 기물 )
     public turn:"white" | "black" = myTeam;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         public board:Array<Board>,
         public piece:piece,
         public wasHandled:boolean,
@@ -303,8 +317,9 @@ abstract class Unit{ // == piece ( 체스 기물 )
             // for(let i = 0; i < 6; i++){
             //     cube_tempMaterial[i].color.set(`${cell.color}`)
             // }
-            const cube_material = cell.cubeMesh.material as THREE.MeshBasicMaterial
-            cube_material.color.set(`${cell.color}`)
+
+            const cube_tempMaterial = cell.cubeMesh.material as THREE.MeshBasicMaterial;
+            cube_tempMaterial.color.set(`${cell.color}`)
         })
         this.showingCell = [];
     }
@@ -358,7 +373,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         setTimeout(() => {
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
+            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 34.5 + 0.01)
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
         }, 300)
@@ -377,6 +392,12 @@ abstract class Unit{ // == piece ( 체스 기물 )
                 return 4;
             case "e":
                 return 5;
+            case "f":
+                return 6;
+            case "g":
+                return 7;
+            default:
+                return 8;
         }
     }
 
@@ -388,9 +409,9 @@ class Queen extends Unit {
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         board: Array<Board>
     ){
         super(team,row,column,layer, board, "QUEEN", false)
@@ -420,170 +441,19 @@ class Queen extends Unit {
 
     public showCanCell(): void {
         this.hideCanCell()
-        {// X + Y
-            for(let i = 1; i <= 5; i++){// 좌 상향
-                if(this.row + i <= 5 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-            for(let i = 1; i <= 5; i++){// 좌 하향
-                if(this.row - i >= 1 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() - i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)    
-                }
-            }
-            for(let i = 1; i <= 5; i++){// 우 상향
-                if(this.row + i <= 5 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() + i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)    
-                }
-            }
-            for(let i = 1; i <= 5; i++){// 우 하향
-                if(this.row - i >= 1 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() + i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)    
-                }
-            }
-        }
-        { // X + Z
-            for(let i = 1; i <= 5; i++){ // 우 상향
-                if(this.layer + i <= 5 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-            
-            for(let i = 1; i <= 5; i++){  // 우 하향
-                if(this.layer - i >= 1 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() + i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ //좌 하향
-                if(this.layer - i >= 1 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() - i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ // 좌 상향
-                if(this.layer + i <= 5 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() - i -1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-        }
-        {// Y + Z
-            for(let i = 1; i <= 5; i++){ // 우 상향
-                if(this.layer + i <= 5 && this.row + i <= 5){
-                    const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ // 우 하향
-                if(this.layer - i >= 1 && this.row + i <= 5){
-                    const cell = this.board[this.layer - i - 1].cells[this.row + i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ // 좌 하향
-                if(this.layer - i >= 1 && this.row - i >= 1){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ //좌 상향
-                if(this.layer + i <= 5 && this.row - i >= 1){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-        }
-
+        
         const cells = this.board[this.layer - 1].cells
-        for(let i = 1; i <= 5; i++){    //foward
-            if(1 <= this.row + i && this.row + i <= 5){
+        for(let i = 1; i <= 8; i++){    //foward
+            if(1 <= this.row + i && this.row + i <= 8){
                 const cell = cells[this.row + i - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
+                try{
+                    cell.onUnit
+                }catch{
+                    console.log(cell)
+                }
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.makeAttackCell(this.showingCell)
@@ -601,8 +471,8 @@ class Queen extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //backward
-            if(1 <= this.row - i && this.row - i <= 5){
+        for(let i = 1; i <= 8; i++){    //backward
+            if(1 <= this.row - i && this.row - i <= 8){
                 const cell = cells[this.row - i - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -624,8 +494,8 @@ class Queen extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //left
-            if(1 <= this.convertCol() - i && this.convertCol()- i <= 5){
+        for(let i = 1; i <= 8; i++){    //left
+            if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
                 const cell = cells[this.row - 1][this.convertCol() - i - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -647,8 +517,8 @@ class Queen extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //right
-            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 5){
+        for(let i = 1; i <= 8; i++){    //right
+            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
                 const cell = cells[this.row - 1][this.convertCol() + i - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -670,8 +540,8 @@ class Queen extends Unit {
         }
 
         
-        for(let i = 1; i <= 5; i++){    //Up
-            if(1 <= this.layer + i && this.layer + i <= 5){
+        for(let i = 1; i <= 3; i++){    //Up
+            if(1 <= this.layer + i && this.layer + i <= 3){
                 const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -694,8 +564,8 @@ class Queen extends Unit {
         }
 
                 
-        for(let i = 1; i <= 5; i++){    //Down
-            if(1 <= this.layer - i && this.layer - i <= 5){
+        for(let i = 1; i <= 3; i++){    //Down
+            if(1 <= this.layer - i && this.layer - i <= 3){
                 const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -717,109 +587,264 @@ class Queen extends Unit {
             }
         }
 
+        {// X + Y
+            for(let i = 1; i <= 8; i++){// 좌 상향
+                if(this.row + i <= 8 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 8; i++){// 좌 하향
+                if(this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)    
+                }
+            }
+            for(let i = 1; i <= 8; i++){// 우 상향
+                if(this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)    
+                }
+            }
+            for(let i = 1; i <= 8; i++){// 우 하향
+                if(this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)    
+                }
+            }
+        }
+        { // X + Z
+            for(let i = 1; i <= 3; i++){ // 우 상향
+                if(this.layer + i <= 3 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            
+            for(let i = 1; i <= 3; i++){  // 우 하향
+                if(this.layer - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
 
-        for(let i = 1; i <= 5; i++){//  + + +
-            if(this.layer + i <= 5 && this.row + i <= 5 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
+            for(let i = 1; i <= 3; i++){ //좌 하향
+                if(this.layer - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
                     }
-                    break;
+                    cell.makeGoCell(this.showingCell)
                 }
-                cell.makeGoCell(this.showingCell)
             }
-        }
-        for(let i = 1; i <= 5; i++){// + + -
-            if(this.layer + i <= 5 && this.row + i <= 5 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        for(let i = 1; i <= 5; i++){// + - +
-            if(this.layer + i <= 5 && this.row - i >= 1 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        for(let i = 1; i <= 5; i++){// - + +
-            if(this.layer - i >= 1 && this.row + i <= 5 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
 
-        for(let i = 1; i <= 5; i++){// - - +
-            if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
+            for(let i = 1; i <= 3; i++){ // 좌 상향
+                if(this.layer + i <= 3 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
                     }
-                    break;
+                    cell.makeGoCell(this.showingCell)
                 }
-                cell.makeGoCell(this.showingCell)
             }
         }
-
-        for(let i = 1; i <= 5; i++){// - + -
-            if(this.layer - i >= 1 && this.row + i <= 5 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
+        {// Y + Z
+            for(let i = 1; i <= 3; i++){ // 우 상향
+                if(this.layer + i <= 3 && this.row + i <= 8){
+                    const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
                     }
-                    break;
+                    cell.makeGoCell(this.showingCell)
                 }
-                cell.makeGoCell(this.showingCell)
+            }
+
+            for(let i = 1; i <= 3; i++){ // 우 하향
+                if(this.layer - i >= 1 && this.row + i <= 8){
+                    const cell = this.board[this.layer - i - 1].cells[this.row + i -1][this.convertCol() - 1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+
+            for(let i = 1; i <= 3; i++){ // 좌 하향
+                if(this.layer - i >= 1 && this.row - i >= 1){
+                    const cell = this.board[this.layer - i - 1].cells[this.row - i -1][this.convertCol() - 1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+
+            for(let i = 1; i <= 3; i++){ //좌 상향
+                if(this.layer + i <= 3 && this.row - i >= 1){
+                    const cell = this.board[this.layer + i - 1].cells[this.row - i -1][this.convertCol() - 1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
             }
         }
-
-        for(let i = 1; i <= 5; i++){// + - -
-            if(this.layer + i <= 5 && this.row - i >= 1 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
+        {//3차원
+            for(let i = 1; i <= 3; i++){//  + + +
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
                     }
-                    break;
+                    cell.makeGoCell(this.showingCell)
                 }
-                cell.makeGoCell(this.showingCell)
+            }
+            for(let i = 1; i <= 3; i++){// + + -
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 3; i++){// + - +
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 3; i++){// - + +
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - +
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - + -
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() + i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// + - -
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - -
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
             }
         }
-
-        for(let i = 1; i <= 5; i++){// - - -
-            if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-
-
     }
 }
 
@@ -829,9 +854,9 @@ class Bishops extends Unit {
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e" ,
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" ,
+        public layer: number,
         board: Array<Board>
     ){        
         super(team,row,column,layer, board, "BISHOPS", false)
@@ -862,8 +887,8 @@ class Bishops extends Unit {
     public showCanCell(): void {
         this.hideCanCell()
         {// X + Y
-            for(let i = 1; i <= 5; i++){// 좌 상향
-                if(this.row + i <= 5 && this.convertCol() - i >= 1){
+            for(let i = 1; i <= 8; i++){// 좌 상향
+                if(this.row + i <= 8 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() - i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
@@ -874,7 +899,7 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-            for(let i = 1; i <= 5; i++){// 좌 하향
+            for(let i = 1; i <= 8; i++){// 좌 하향
                 if(this.row - i >= 1 && this.convertCol() - i >= 1){
                     const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() - i -1];
                     if(cell.onUnit){
@@ -886,8 +911,8 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-            for(let i = 1; i <= 5; i++){// 우 상향
-                if(this.row + i <= 5 && this.convertCol() + i <= 5){
+            for(let i = 1; i <= 8; i++){// 우 상향
+                if(this.row + i <= 8 && this.convertCol() + i <= 8){
                     const cell = this.board[this.layer -1].cells[this.row + i - 1][this.convertCol() + i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
@@ -898,8 +923,8 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)    
                 }
             }
-            for(let i = 1; i <= 5; i++){// 우 하향
-                if(this.row - i >= 1 && this.convertCol() + i <= 5){
+            for(let i = 1; i <= 8; i++){// 우 하향
+                if(this.row - i >= 1 && this.convertCol() + i <= 8){
                     const cell = this.board[this.layer -1].cells[this.row - i - 1][this.convertCol() + i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
@@ -911,10 +936,10 @@ class Bishops extends Unit {
                 }
             }
         }
-        { // X + Z
-            for(let i = 1; i <= 5; i++){ // 우 상향
-                if(this.layer + i <= 5 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() + i -1];
+        {//3차원
+            for(let i = 1; i <= 3; i++){//  + + +
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -924,10 +949,9 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-            
-            for(let i = 1; i <= 5; i++){  // 우 하향
-                if(this.layer - i >= 1 && this.convertCol() + i <= 5){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() + i -1];
+            for(let i = 1; i <= 3; i++){// + + -
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() - i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -937,10 +961,9 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-
-            for(let i = 1; i <= 5; i++){ //좌 하향
-                if(this.layer - i >= 1 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() - i -1];
+            for(let i = 1; i <= 3; i++){// + - +
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() + i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -950,10 +973,61 @@ class Bishops extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
             }
-
-            for(let i = 1; i <= 5; i++){ // 좌 상향
-                if(this.layer + i <= 5 && this.convertCol() - i >= 1){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() - i -1];
+            for(let i = 1; i <= 3; i++){// - + +
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - +
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - + -
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() + i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// + - -
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - -
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() - i -1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -964,59 +1038,7 @@ class Bishops extends Unit {
                 }
             }
         }
-        {// Y + Z
-            for(let i = 1; i <= 5; i++){ // 우 상향
-                if(this.layer + i <= 5 && this.row + i <= 5){
-                    const cell = this.board[this.layer + i - 1].cells[this.row + i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ // 우 하향
-                if(this.layer - i >= 1 && this.row + i <= 5){
-                    const cell = this.board[this.layer - i - 1].cells[this.row + i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ // 좌 하향
-                if(this.layer - i >= 1 && this.row - i >= 1){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-
-            for(let i = 1; i <= 5; i++){ //좌 상향
-                if(this.layer + i <= 5 && this.row - i >= 1){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - i -1][this.convertCol() - 1];
-                    if(cell.onUnit){
-                        if(cell.onUnitTeam != this.team){
-                            cell.makeAttackCell(this.showingCell)
-                        }
-                        break;
-                    }
-                    cell.makeGoCell(this.showingCell)
-                }
-            }
-        }
+        
     }
 }
 
@@ -1026,9 +1048,9 @@ class Rooks extends Unit {
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         board: Array<Board>
     ){
         super(team,row,column,layer, board, "ROOKS", false)
@@ -1058,12 +1080,17 @@ class Rooks extends Unit {
     public showCanCell(): void {
         this.hideCanCell()
         const cells = this.board[this.layer - 1].cells
-        for(let i = 1; i <= 5; i++){    //foward
-            if(1 <= this.row + i && this.row + i <= 5){
+        for(let i = 1; i <= 8; i++){    //foward
+            if(1 <= this.row + i && this.row + i <= 8){
                 const cell = cells[this.row + i - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
                 cell.canGo = true;
+                try{
+                    cell.onUnit
+                }catch{
+                    console.log(cell)
+                }
                 if(cell.onUnit) {
                     if(cell.onUnitTeam != this.team){
                         cell.makeAttackCell(this.showingCell)
@@ -1081,8 +1108,8 @@ class Rooks extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //backward
-            if(1 <= this.row - i && this.row - i <= 5){
+        for(let i = 1; i <= 8; i++){    //backward
+            if(1 <= this.row - i && this.row - i <= 8){
                 const cell = cells[this.row - i - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -1104,8 +1131,8 @@ class Rooks extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //left
-            if(1 <= this.convertCol() - i && this.convertCol()- i <= 5){
+        for(let i = 1; i <= 8; i++){    //left
+            if(1 <= this.convertCol() - i && this.convertCol()- i <= 8){
                 const cell = cells[this.row - 1][this.convertCol() - i - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -1127,8 +1154,8 @@ class Rooks extends Unit {
             }
         }
 
-        for(let i = 1; i <= 5; i++){    //right
-            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 5){
+        for(let i = 1; i <= 8; i++){    //right
+            if(1 <= this.convertCol() +  i && this.convertCol() + i <= 8){
                 const cell = cells[this.row - 1][this.convertCol() + i - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -1150,8 +1177,8 @@ class Rooks extends Unit {
         }
 
         
-        for(let i = 1; i <= 5; i++){    //Up
-            if(1 <= this.layer + i && this.layer + i <= 5){
+        for(let i = 1; i <= 3; i++){    //Up
+            if(1 <= this.layer + i && this.layer + i <= 3){
                 const cell = this.board[this.layer + i - 1].cells[this.row - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -1174,8 +1201,8 @@ class Rooks extends Unit {
         }
 
                 
-        for(let i = 1; i <= 5; i++){    //Down
-            if(1 <= this.layer - i && this.layer - i <= 5){
+        for(let i = 1; i <= 3; i++){    //Down
+            if(1 <= this.layer - i && this.layer - i <= 3){
                 const cell = this.board[this.layer - i - 1].cells[this.row - 1][this.convertCol() - 1];
                 const material = cell.mesh.material as THREE.MeshBasicMaterial;
                 material.color.set('yellow')
@@ -1194,6 +1221,109 @@ class Rooks extends Unit {
                     cell.makeGoCell(this.showingCell)
                 }
 
+            }
+        }
+
+        {//3차원
+            for(let i = 1; i <= 3; i++){//  + + +
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 3; i++){// + + -
+                if(this.layer + i <= 3 && this.row + i <= 8 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 3; i++){// + - +
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+            for(let i = 1; i <= 3; i++){// - + +
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - +
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 8){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - + -
+                if(this.layer - i >= 1 && this.row + i <= 8 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// + - -
+                if(this.layer + i <= 3 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
+            }
+    
+            for(let i = 1; i <= 3; i++){// - - -
+                if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() - i >= 1){
+                    const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() - i -1];
+                    if(cell.onUnit){
+                        if(cell.onUnitTeam != this.team){
+                            cell.makeAttackCell(this.showingCell)
+                        }
+                        break;
+                    }
+                    cell.makeGoCell(this.showingCell)
+                }
             }
         }
     }
@@ -1242,9 +1372,9 @@ class King extends Unit{
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         board: Array<Board>
     ){
         super(team,row,column,layer, board, "KING", false)
@@ -1279,7 +1409,7 @@ class King extends Unit{
             const goLR = this.convertCol() + goTo[0] -1;
             const goLayer = this.layer + goTo[1] -1;
 
-            if(( 0 <= goFoward && goFoward <= 4) && ( 0 <= goLR && goLR <= 4 ) && ( 0 <= goLayer && goLayer <=4)){
+            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 2)){
                 const cells = this.board[goLayer].cells
                 const cell = cells[goFoward][goLR];
                 
@@ -1343,9 +1473,9 @@ class Knights extends Unit{
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         board: Array<Board>
     ){
         super(team,row,column,layer, board, "KNIGHTS", false)
@@ -1380,7 +1510,7 @@ class Knights extends Unit{
             const goLR = this.convertCol() + goTo[0] -1;
             const goLayer = this.layer + goTo[1] -1;
 
-            if(( 0 <= goFoward && goFoward <= 4) && ( 0 <= goLR && goLR <= 4 ) && ( 0 <= goLayer && goLayer <= 4)){
+            if(( 0 <= goFoward && goFoward <= 7) && ( 0 <= goLR && goLR <= 7 ) && ( 0 <= goLayer && goLayer <= 2)){
                 const cells = this.board[goLayer].cells
                 const cell = cells[goFoward][goLR];
                 
@@ -1409,9 +1539,9 @@ class Pawns extends Unit{
     private ID:string;
     constructor(
         public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e",
-        public layer: 1 | 2 | 3 | 4 | 5,
+        public row: number,
+        public column : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h",
+        public layer: number,
         board: Array<Board>
     ){
         super(team,row,column,layer, board, "PAWNS", false)
@@ -1440,222 +1570,147 @@ class Pawns extends Unit{
     }
     public showCanCell(){
         this.hideCanCell()
-
-            const cells = this.board[this.layer - 1].cells;
-            let frontCell = null;
-            let frontRow = null;
-            if(this.team == "white" && this.row != 5){
-                frontCell = cells[this.row][this.convertCol() - 1];
-                frontRow = cells[this.row]
-            }else if(this.team == "black" && this.row != 1){
-                frontCell = cells[this.row - 2][this.convertCol() - 1];
-                frontRow = cells[this.row - 2]
+        //base
+        const thisLayer = this.board[this.layer -1].cells;
+        if(this.team == "white" && this.row <= 7){
+            let upLayer = null;
+            let upLayer2 = null;
+            let downLayer =null
+            if(this.layer > 1){
+                downLayer = this.board[this.layer-2].cells;
             }
-            if(frontCell != null && !frontCell.onUnit){
-                frontCell.makeGoCell(this.showingCell)
+            if(this.layer < 3){
+                upLayer = this.board[this.layer].cells;
             }
-
-            if(frontRow != null){
-                const leftCell = frontRow[this.convertCol() - 2];
-                const rightCell = frontRow[this.convertCol()];
-
-                if(leftCell != null && leftCell.onUnit){
-                    if(leftCell.onUnitTeam != this.team){
-                        leftCell.makeAttackCell(this.showingCell)
-                    }
-                }
-                if(rightCell != null && rightCell.onUnit){
-                    if(rightCell.onUnitTeam != this.team){
-                        rightCell.makeAttackCell(this.showingCell)
-                    }
-                }
+            if(this.layer == 1){
+                upLayer2 = this.board[this.layer + 1].cells;
             }
 
-            let upCell = null;
-            let upFrontCell= null;
-            let upRow = null;
+            if(downLayer != null && !downLayer[this.row][this.convertCol() -1].onUnit){
+                downLayer[this.row][this.convertCol() -1].makeGoCell(this.showingCell)
+            }
 
-            if(this.team == "white" && this.layer != 5){
-                upCell = this.board[this.layer].cells[this.row -1][this.convertCol() - 1]
-                upRow = this.board[this.layer].cells[this.row - 1]
-                if(this.row != 5){
-                    upFrontCell = this.board[this.layer].cells[this.row][this.convertCol() - 1]
+            if(downLayer != null && !downLayer[this.row-1][this.convertCol() -1].onUnit){
+                downLayer[this.row-1][this.convertCol() -1].makeGoCell(this.showingCell)
+            }
+
+            if(!thisLayer[this.row][this.convertCol() -1].onUnit){
+                thisLayer[this.row][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && !thisLayer[this.row + 1][this.convertCol() -1].onUnit){
+                    thisLayer[this.row + 1][this.convertCol() -1].makeGoCell(this.showingCell)
                 }
+            }
+            if(upLayer != null && !upLayer[this.row-1][this.convertCol() -1].onUnit){
+                upLayer[this.row-1][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && upLayer2 != null && !upLayer2[this.row-1][this.convertCol() -1].onUnit){
+                    upLayer2[this.row -1][this.convertCol() -1].makeGoCell(this.showingCell)
+                }
+            }
+            if(upLayer != null && !upLayer[this.row][this.convertCol() -1].onUnit){
+                upLayer[this.row][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && upLayer2 != null && !upLayer2[this.row + 1][this.convertCol() -1].onUnit){
+                    upLayer2[this.row + 1][this.convertCol() -1].makeGoCell(this.showingCell)
+                }
+            }
+
+            if(this.convertCol() != 1){
+                console.log(thisLayer[this.row][this.convertCol() -2])
+                if(thisLayer[this.row][this.convertCol() -2].onUnit && thisLayer[this.row][this.convertCol() -2].onUnitTeam != this.team){
+                    thisLayer[this.row][this.convertCol()-2].makeAttackCell(this.showingCell)
+                }
+                if(upLayer != null && upLayer[this.row][this.convertCol() -2].onUnit && upLayer[this.row][this.convertCol() -2].onUnitTeam != this.team){
+                    upLayer[this.row][this.convertCol() -2].makeAttackCell(this.showingCell)
+                }
+                if(downLayer != null && downLayer[this.row][this.convertCol() -2].onUnit && downLayer[this.row][this.convertCol() -2].onUnitTeam != this.team){
+                    downLayer[this.row][this.convertCol() -2].makeAttackCell(this.showingCell)
+                }
+            }
+
+            if(this.convertCol() != 8){
+                if(thisLayer[this.row][this.convertCol()].onUnit && thisLayer[this.row][this.convertCol()].onUnitTeam != this.team){
+                    thisLayer[this.row][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+                if(upLayer != null && upLayer[this.row][this.convertCol()].onUnit && upLayer[this.row][this.convertCol()].onUnitTeam != this.team){
+                    upLayer[this.row][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+                if(downLayer != null && downLayer[this.row][this.convertCol()].onUnit && downLayer[this.row][this.convertCol()].onUnitTeam != this.team){
+                    downLayer[this.row][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+            }
+        }else if(this.team == "black" && this.row >= 2){
+            let downLayer =null
+            let downLayer2 = null;
+            let upLayer = null;
+            if(this.layer < 3){
+                upLayer = this.board[this.layer].cells;
+            }
+
+            if(this.layer > 1){
+                downLayer = this.board[this.layer-2].cells;
+            }
+            if(this.layer == 3){
+                downLayer2 = this.board[this.layer -3].cells;
+            }
+
+            if(upLayer != null && !upLayer[this.row-1][this.convertCol() -1].onUnit){
+                upLayer[this.row-1][this.convertCol() -1].makeGoCell(this.showingCell)
+            }
+
+            if(upLayer != null && !upLayer[this.row -2][this.convertCol() -1].onUnit){
+                upLayer[this.row -2][this.convertCol() -1].makeGoCell(this.showingCell)
+            }
             
-            }else if(this.team == "black" && this.layer != 1){
-                upCell = this.board[this.layer-2].cells[this.row -1][this.convertCol() - 1];
-                upRow = this.board[this.layer-2].cells[this.row -1]
-                if(this.row != 1){
-                    upFrontCell = this.board[this.layer-2].cells[this.row-2][this.convertCol() - 1]
+            if(!thisLayer[this.row-2][this.convertCol() -1].onUnit){
+                thisLayer[this.row-2][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && !thisLayer[this.row-3][this.convertCol() -1].onUnit){
+                    thisLayer[this.row - 3][this.convertCol() -1].makeGoCell(this.showingCell)
                 }
             }
-            if(upCell != null && !upCell.onUnit){
-                upCell.makeGoCell(this.showingCell)
-            }
-
-            if(upRow != null){
-                if(this.convertCol() != 1){
-                    const upLeftCell = upRow[this.convertCol() - 2]
-                    if(upLeftCell.onUnit && upLeftCell.onUnitTeam != this.team){
-                        upLeftCell.makeAttackCell(this.showingCell)
-                    }
-                } 
-                if(this.convertCol() != 5){
-                    const upRightCell = upRow[this.convertCol()]
-                    if(upRightCell.onUnit && upRightCell.onUnitTeam != this.team){
-                        upRightCell.makeAttackCell(this.showingCell)
-                    }
-                }
-
-                if(upFrontCell != null && upFrontCell.onUnit && upFrontCell.onUnitTeam != this.team){
-                    upFrontCell.makeAttackCell(this.showingCell)
+            if(downLayer != null && !downLayer[this.row-1][this.convertCol() -1].onUnit){
+                downLayer[this.row-1][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && downLayer2 !=null && !downLayer2[this.row -1][this.convertCol() -1].onUnit){
+                    downLayer2[this.row -1][this.convertCol() -1].makeGoCell(this.showingCell)
                 }
             }
-    }
+            if(downLayer != null && !downLayer[this.row-2][this.convertCol() -1].onUnit){
+                downLayer[this.row-2][this.convertCol() -1].makeGoCell(this.showingCell)
+                if(!this.wasHandled && downLayer2 != null && !downLayer2[this.row - 3][this.convertCol() -1].onUnit){
+                    downLayer2[this.row -3][this.convertCol() -1].makeGoCell(this.showingCell)
+                }
+            }
 
-}
-
-class Unicorns extends Unit{
-    public wasHandled = false;
-    private config = {}
-    private ID:string;
-    constructor(
-        public team: "white" | "black",
-        public row: 1 | 2 | 3 | 4 | 5,
-        public column : "a" | "b" | "c" | "d" | "e" ,
-        public layer: 1 | 2 | 3 | 4 | 5,
-        board: Array<Board>
-    ){        
-        super(team,row,column,layer, board, "BISHOPS", false)
-        this.ID = `${team}_BISHOPS_${uuidv4()}`
-    }
-
-    public addToScene(scene: THREE.Scene): void {
-        const loader = new GLTFLoader();
-        loader.load(
-            `/3D/UNICORNS_${this.team}.glb`,
-            (gltf) => {
-                this.model = gltf.scene;
-                this.model.position.set(this.convertCol() * mapConfig.cellSize.x -15 + 2,this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01, this.row * -mapConfig.cellSize.y + 15 - 6)
-                this.model.scale.set(0.4, 0.4, 0.4);
+            if(this.convertCol() != 1){
+                console.log(thisLayer[this.row -2][this.convertCol() -2])
+                if(thisLayer[this.row-2][this.convertCol() -2].onUnit && thisLayer[this.row-2][this.convertCol() -2].onUnitTeam != this.team){
+                    thisLayer[this.row-2][this.convertCol()-2].makeAttackCell(this.showingCell)
+                }
+                if(upLayer != null && upLayer[this.row-2][this.convertCol() -2].onUnit && upLayer[this.row-2][this.convertCol() -2].onUnitTeam != this.team){
+                    upLayer[this.row-2][this.convertCol() -2].makeAttackCell(this.showingCell)
+                }
                 
-                this.model.traverse((child) => {
-                    if (child instanceof THREE.Mesh) {
-                        child.userData.type = 'units'; // 타입 설정
-                        child.userData.unit = this;    // 현재 유닛 객체 저장
-                    }
-                });
-                this.model.userData.type = 'units'
-                this.model.userData.unit = this
-                scene.add(this.model)
+                if(downLayer != null && downLayer[this.row-2][this.convertCol() -2].onUnit && downLayer[this.row-2][this.convertCol() -2].onUnitTeam != this.team){
+                    downLayer[this.row-2][this.convertCol() -2].makeAttackCell(this.showingCell)
+                }
             }
-        )
+
+            if(this.convertCol() != 8){
+                
+                console.log(thisLayer[this.row -2][this.convertCol()])
+                console.log(myTeam)
+                if(thisLayer[this.row-2][this.convertCol()].onUnit && thisLayer[this.row-2][this.convertCol()].onUnitTeam != this.team){
+                    thisLayer[this.row-2][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+                if(upLayer != null && upLayer[this.row-2][this.convertCol()].onUnit && upLayer[this.row-2][this.convertCol()].onUnitTeam != this.team){
+                    upLayer[this.row-2][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+                if(downLayer != null && downLayer[this.row-2][this.convertCol()].onUnit && downLayer[this.row-2][this.convertCol()].onUnitTeam != this.team){
+                    downLayer[this.row-2][this.convertCol()].makeAttackCell(this.showingCell)
+                }
+            }
+        }
+
     }
 
-    public showCanCell(): void {
-        this.hideCanCell()
-        for(let i = 1; i <= 5; i++){//  + + +
-            if(this.layer + i <= 5 && this.row + i <= 5 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        for(let i = 1; i <= 5; i++){// + + -
-            if(this.layer + i <= 5 && this.row + i <= 5 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer + i -1].cells[this.row + i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        for(let i = 1; i <= 5; i++){// + - +
-            if(this.layer + i <= 5 && this.row - i >= 1 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        for(let i = 1; i <= 5; i++){// - + +
-            if(this.layer - i >= 1 && this.row + i <= 5 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-
-        for(let i = 1; i <= 5; i++){// - - +
-            if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() + i <= 5){
-                const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() + i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-
-        for(let i = 1; i <= 5; i++){// - + -
-            if(this.layer - i >= 1 && this.row + i <= 5 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer - i -1].cells[this.row + i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-
-        for(let i = 1; i <= 5; i++){// + - -
-            if(this.layer + i <= 5 && this.row - i >= 1 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer + i -1].cells[this.row - i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-
-        for(let i = 1; i <= 5; i++){// - - -
-            if(this.layer - i >= 1 && this.row - i >= 1 && this.convertCol() - i >= 1){
-                const cell = this.board[this.layer - i -1].cells[this.row - i - 1][this.convertCol() - i -1];
-                if(cell.onUnit){
-                    if(cell.onUnitTeam != this.team){
-                        cell.makeAttackCell(this.showingCell)
-                    }
-                    break;
-                }
-                cell.makeGoCell(this.showingCell)
-            }
-        }
-        
-    }
 }
 ////////////////////////////////////////////////////////
 
@@ -1673,24 +1728,27 @@ class Space implements space {
         let isWhite = true;
         const Boards = [];
 
-        for (let layer = 1; layer <= 5; layer++) {
+        for (let layer = 1; layer <= 3; layer++) {
             const rows: Array<Array<Cell>> = [];
-            const literalLayer = layer as 1 | 2 | 3 | 4 | 5;
 
-            for (let row = 1; row <= 5; row++) {
+            for (let row = 1; row <= 8; row++) {
                 const columns: Array<Cell> = [];
-                const literalRow = row as 1 | 2 | 3 | 4 | 5;
 
-                for (let column = 1; column <= 5; column++) {
-                    columns.push(new Cell(null, literalRow, column, literalLayer, isWhite, cellID++, true));
+                for (let column = 1; column <= 8; column++) {
+                    console.log(`layer : ${layer}, row : ${row}, column : ${column}`)
+                    columns.push(new Cell(null, row, column, layer, isWhite, cellID++, true));
                     isWhite = !isWhite;
                 }
+                isWhite = !isWhite;
                 rows.push(columns);
             }
-            Boards.push(new Board(rows, literalLayer));
+            
+            isWhite = !isWhite;
+            Boards.push(new Board(rows, layer));
         }
 
         this.boards = Boards;
+        console.log(this.boards)
     }
 
     public showWall(){
@@ -1737,8 +1795,14 @@ function ThreeBoard({spaceRef, turn, setTurn, wallVisible} : {spaceRef: React.Mu
                 return "c"
             case 4:
                 return "d"
-            default:
+            case 5:
                 return "e"
+            case 6:
+                return "f"
+            case 7:
+                return "g"
+            default:
+                return "h"
         }
     }
 
@@ -1750,46 +1814,36 @@ function ThreeBoard({spaceRef, turn, setTurn, wallVisible} : {spaceRef: React.Mu
         gameSpace.addToScene(wallVisible);
 
         const initGame = () =>{
-            for(let i = 1; i <= 5; i++){
+            for(let i = 1; i <= 8; i++){
+                console.log("white팀 폰", i)
                 myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
             }
-            for(let i = 1; i <= 5; i++){
-                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
-            }
-            myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
-            myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
-            myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
                                       
             myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
             myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
-            myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
-            myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
-            myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
+            myUnits.push(new Bishops( myTeam, 1, "c", 1, gameSpace.boards))
+            myUnits.push(new Queen(   myTeam, 1, "d", 1, gameSpace.boards))
+            myUnits.push(new King(    myTeam, 1, "e", 1, gameSpace.boards))
+            myUnits.push(new Bishops( myTeam, 1, "f", 1, gameSpace.boards))
+            myUnits.push(new Knights( myTeam, 1, "g", 1, gameSpace.boards))
+            myUnits.push(new Rooks(   myTeam, 1, "h", 1, gameSpace.boards))
 
             myUnits.forEach((unit: any) => {
                 unit.addToScene(scene)
             })
 
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns(myTeam=="white" ? "black" : "white", 4, changeNumToCol(i), 5, gameSpace.boards))
-            }
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns(myTeam=="white" ? "black" : "white", 4, changeNumToCol(i), 4, gameSpace.boards))
+            for(let i = 1; i <= 8; i++){
+                enemyUnits.push(new Pawns(myTeam=="white" ? "black" : "white", 7, changeNumToCol(i), 3, gameSpace.boards))
             }
 
-            enemyUnits.push(new Unicorns( myTeam=="white" ? "black" : "white", 5, "a", 4, gameSpace.boards))
-            enemyUnits.push(new Bishops(  myTeam=="white" ? "black" : "white", 5, "b", 4, gameSpace.boards))
-            enemyUnits.push(new Queen(    myTeam=="white" ? "black" : "white", 5, "c", 4, gameSpace.boards))
-            enemyUnits.push(new Unicorns( myTeam=="white" ? "black" : "white", 5, "d", 4, gameSpace.boards))
-            enemyUnits.push(new Bishops(  myTeam=="white" ? "black" : "white", 5, "e", 4, gameSpace.boards))
-
-            enemyUnits.push(new Rooks(    myTeam=="white" ? "black" : "white", 5, "a", 5, gameSpace.boards))
-            enemyUnits.push(new Knights(  myTeam=="white" ? "black" : "white", 5, "b", 5, gameSpace.boards))
-            enemyUnits.push(new King(     myTeam=="white" ? "black" : "white", 5, "c", 5, gameSpace.boards))
-            enemyUnits.push(new Knights(  myTeam=="white" ? "black" : "white", 5, "d", 5, gameSpace.boards))
-            enemyUnits.push(new Rooks(    myTeam=="white" ? "black" : "white", 5, "e", 5, gameSpace.boards))
+            enemyUnits.push(new Rooks(   myTeam=="white" ? "black" : "white", 8, "a", 3, gameSpace.boards))
+            enemyUnits.push(new Knights( myTeam=="white" ? "black" : "white", 8, "b", 3, gameSpace.boards))
+            enemyUnits.push(new Bishops( myTeam=="white" ? "black" : "white", 8, "c", 3, gameSpace.boards))
+            enemyUnits.push(new Queen(   myTeam=="white" ? "black" : "white", 8, "d", 3, gameSpace.boards))
+            enemyUnits.push(new King(    myTeam=="white" ? "black" : "white", 8, "e", 3, gameSpace.boards))
+            enemyUnits.push(new Bishops( myTeam=="white" ? "black" : "white", 8, "f", 3, gameSpace.boards))
+            enemyUnits.push(new Knights( myTeam=="white" ? "black" : "white", 8, "g", 3, gameSpace.boards))
+            enemyUnits.push(new Rooks(   myTeam=="white" ? "black" : "white", 8, "h", 3, gameSpace.boards))
 
             enemyUnits.forEach((unit: any) => {
                 unit.addToScene(scene)
@@ -1934,27 +1988,15 @@ export default function Chess(){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,100,0]} rotation-x={Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
                 
                 <mesh position={[0,-100,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,-100,0]} rotation-x={-Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
                 
                 <mesh position={[100,-14,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[100,0,0]} rotation-y={-Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
 
 
@@ -1963,29 +2005,17 @@ export default function Chess(){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[-100,0,0]} rotation-y={Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
 
                 
                 <mesh position={[0,-14,100]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,0,100]} rotation-y={Math.PI}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
 
                 
                 <mesh position={[0,-14,-100]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,0,-100]}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
     
                 {/** Code */}
