@@ -24,7 +24,7 @@ const mapConfig = {
     }
 }
 
-type piece = "KING" | "QUEEN" | "ROOKS" | "BISHOPS" | "KNIGHTS" | "PAWNS" | "NONE";
+type piece = "KING" | "QUEEN" | "ROOKS" | "BISHOPS" | "KNIGHTS" | "PAWNS" | "UNICORNS" | "NONE";
 
 interface cell {
     readonly color: "white" | "black";
@@ -1526,14 +1526,14 @@ class Unicorns extends Unit{
         public layer: 1 | 2 | 3 | 4 | 5,
         board: Array<Board>
     ){        
-        super(team,row,column,layer, board, "BISHOPS", false)
-        this.ID = `${team}_BISHOPS_${uuidv4()}`
+        super(team,row,column,layer, board, "UNICORNS", false)
+        this.ID = `${team}_UNICORNS_${uuidv4()}`
     }
 
     public addToScene(scene: THREE.Scene): void {
         const loader = new GLTFLoader();
         loader.load(
-            `/3D/UNICORNS_${this.team}.glb`,
+            `/3D/UNICORN_${this.team}.glb`,
             (gltf) => {
                 this.model = gltf.scene;
                 this.model.position.set(this.convertCol() * mapConfig.cellSize.x -15 + 2,this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01, this.row * -mapConfig.cellSize.y + 15 - 6)
