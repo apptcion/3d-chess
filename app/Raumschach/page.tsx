@@ -107,11 +107,6 @@ class Cell implements cell{
             transparent : true,
             opacity : 1,
         })
-        const cubeBottomGeometry = new THREE.PlaneGeometry(
-            mapConfig.cellSize.x,
-            mapConfig.cellSize.y
-        )
-        const cubeBottom = new THREE.Mesh(cubeBottomGeometry, cubeMaterial)
 
         cubeMaterial.opacity = 0.6
 
@@ -534,7 +529,7 @@ class Queen extends Unit {
             }
         }
 
-        let cells = this.board[this.layer - 1].cells
+        const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 5; i++){    //foward
             if(1 <= this.row + i && this.row + i <= 5){
                 const cell = cells[this.row + i - 1][this.convertCol() - 1];
@@ -912,7 +907,7 @@ class Rooks extends Unit {
 
     public showCanCell(): void {
         this.hideCanCell()
-        let cells = this.board[this.layer - 1].cells
+        const cells = this.board[this.layer - 1].cells
         for(let i = 1; i <= 5; i++){    //foward
             if(1 <= this.row + i && this.row + i <= 5){
                 const cell = cells[this.row + i - 1][this.convertCol() - 1];
@@ -1261,13 +1256,6 @@ class Knights extends Unit{
 
 class Pawns extends Unit{
     public wasHandled = false;
-    private config = {
-        moving : {
-            points : [
-                [0,0,1]
-            ]
-        }
-    }
     private ID:string;
     constructor(
         public team: "white" | "black",
@@ -1302,8 +1290,8 @@ class Pawns extends Unit{
     }
     public showCanCell(){
         this.hideCanCell()
-        this.config.moving.points.forEach(goTo => {
-            let cells = this.board[this.layer - 1].cells;
+
+            const cells = this.board[this.layer - 1].cells;
             let frontCell = null;
             let frontRow = null;
             if(this.team == "white" && this.row != 5){
@@ -1373,7 +1361,6 @@ class Pawns extends Unit{
                     upFrontCell.makeAttackCell(this.showingCell)
                 }
             }
-        })
     }
 
 }
