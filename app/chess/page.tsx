@@ -1413,13 +1413,14 @@ export default function Chess(){
     const [turn, setTurn] = useState<"white"|"black">(myTeam);
 
     useEffect(() => {
+        console.log(visible)
         if(spaceRef.current){
             spaceRef.current.setAllVisible(visible)
         }
 
 
 
-    },[turn])
+    },[turn, visible])
 
     return (
         <div className={styles.WRAP}>
@@ -1449,7 +1450,8 @@ export default function Chess(){
                     <input
                         type="checkbox"
                         checked={visible}
-                        onChange={(e) => setVisible(e.target.checked)}
+                        onChange={(e) => 
+                            setVisible(e.target.checked)}
                     />
                     <div id="showTurn">{turn}</div>
             </div>
