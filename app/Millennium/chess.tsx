@@ -1752,7 +1752,7 @@ class Pawns extends Unit{
                 this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
                 clearInterval(animeId)
 
-                if(this.team == myTeam && cell.row == 5 && cell.layer == 8){
+                if(this.team == myTeam && cell.row == 8 && cell.layer == 3){
                     myUnits = myUnits.filter((unit:Unit) => {
                         return unit.ID != this.ID
                     })
