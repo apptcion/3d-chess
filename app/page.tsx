@@ -8,7 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     if(getCookie('ticket') === undefined){
-      setCookie('from','/');
+      setCookie('from','http://chess.apptcion.site');
       console.log("토큰 없음", getCookie('ticket'))
       location.href = 'https://apptcion.site/filter';
     }else{
@@ -24,7 +24,7 @@ export default function Home() {
           if(response.ok) return response.json();
       }).then((data) => {
         if(!data){
-          setCookie('from','http://chess.apptcion.site:3000/');
+          setCookie('from','http://chess.apptcion.site/');
           location.href = 'https://apptcion.site/filter';
           console.log("토큰 잘못됨", getCookie('ticket'))
         }
