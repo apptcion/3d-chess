@@ -1955,7 +1955,7 @@ export default function Chess(){
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
-    const [win, setWin] = useState<"white"|"black"|"none">("none");
+    //const [win, setWin] = useState<"white"|"black"|"none">("none");
 
     useEffect(() => {
         if(spaceRef.current){
@@ -2058,7 +2058,7 @@ export default function Chess(){
                         checked={wallVisible}
                         onChange={(e) => setWallVisible(e.target.checked)}
                      /> </div>
-                    <div id="showTurn">{win}</div>
+                    {/*<div id="showTurn">{win}</div>*/}
             </div>
         </div>
     )

@@ -2023,7 +2023,7 @@ export default function Chess(){
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
-    const [turn, setTurn] = useState<"white"|"black">(myTeam);
+   // const [turn, setTurn] = useState<"white"|"black">(myTeam);
 
     useEffect(() => {
         if(spaceRef.current){
