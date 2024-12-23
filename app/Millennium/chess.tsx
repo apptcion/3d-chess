@@ -345,6 +345,8 @@ abstract class Unit{ // == piece ( 체스 기물 )
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
 
+        console.log(scene.add)
+
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
             console.log("Kill!!!")
