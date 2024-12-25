@@ -7,7 +7,7 @@ import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io';
 
 const colorConfig = {
@@ -311,6 +311,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     public update(scene:THREE.Scene, window:Window){
         scene.remove(this.model)
+        console.log(window)
         if(this.death){
             myUnits = myUnits.filter((unit:Unit) => {
                 return unit.ID != this.ID
@@ -328,6 +329,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
+        console.log(target)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
