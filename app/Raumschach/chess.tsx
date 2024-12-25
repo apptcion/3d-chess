@@ -7,6 +7,8 @@ import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
+import { io, Socket } from 'socket.io-client';
+import { DefaultEventsMap } from 'socket.io';
 
 const colorConfig = {
     opacity : {
@@ -240,9 +242,10 @@ class Board implements board{
 
 abstract class Unit{ // == piece ( 체스 기물 )
     public death:boolean;
-    protected showingCell:Array<Cell> = []
+    public showingCell:Array<Cell> = []
     public model:THREE.Group;
-    public turn:"white" | "black" = myTeam;
+    public turn:"white" | "black" = "white";
+    public cell:Cell;
     constructor(
         public team: "white" | "black",
         public row: 1 | 2 | 3 | 4 | 5,
@@ -257,6 +260,9 @@ abstract class Unit{ // == piece ( 체스 기물 )
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnit = true;
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnitTeam = team
         board[layer - 1].cells[row - 1][this.convertCol() - 1].piece = this
+
+        this.cell = board[layer -1].cells[row -1][this.convertCol() -1]
+        this.cell.piece = this
         this.model = new THREE.Group()
     }
     
@@ -306,35 +312,33 @@ abstract class Unit{ // == piece ( 체스 기물 )
     public update(scene:THREE.Scene, window:Window){
         scene.remove(this.model)
         if(this.death){
-            ////Temp
             myUnits = myUnits.filter((unit:Unit) => {
                 return unit.ID != this.ID
             })
-            if(this.piece == "KING"){
-                console.log("Kill King")
-                //setGameOver
-                window.removeEventListener('click',clickHandler )
-            }
             enemyUnits = enemyUnits.filter((unit:Unit) => {
                 return unit.ID != this.ID
             })
+            if(this.piece == "KING"){
+                //SetGameOver
+            }
         }else{        
             scene.add(this.model)
         }
     }
 
-    async move(cell:Cell, scene:THREE.Scene){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
 
-        console.log(scene.add)
-
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
-            console.log("Kill!!!")
+            console.log("Kill")
+            if(myMove){
+                console.log("I kill enemy")
+            }
             updateGame()
         }
 
@@ -368,6 +372,13 @@ abstract class Unit{ // == piece ( 체스 기물 )
             clearInterval(animeId)
         }, 300)
         this.wasHandled = true;
+
+        if(myMove){
+            socket.emit('moveUnit', {
+                unitID: this.ID,
+                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
+            })
+        }
     }
 
     public convertCol(){
@@ -1504,7 +1515,7 @@ class Pawns extends Unit{
                 }
             }
     }
-    async move(cell:Cell, scene:THREE.Scene){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -1542,11 +1553,10 @@ class Pawns extends Unit{
 
         setTimeout(() => {
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
+            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 35 + 0.01)
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
-
-            if(this.team == myTeam && cell.row == 5 && cell.layer == 5){
+            if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
@@ -1554,17 +1564,37 @@ class Pawns extends Unit{
                 const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
                 newObj.addToScene(scene)
                 myUnits.push(newObj)
-            }else if(this.team != myTeam && cell.row == 1 && cell.layer == 1){
-                enemyUnits = myUnits.filter((unit:Unit) => {
+                console.log(myUnits)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                }
+            }
+            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
+                myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
                 scene.remove(this.model)
                 const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
                 newObj.addToScene(scene);
-                enemyUnits.push(newObj)
+                myUnits.push(newObj)
+                console.log(myUnits)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+    
+                }
             }
         }, 300)
         this.wasHandled = true;
+        if(myMove){
+            socket.emit('moveUnit', {
+                unitID: this.ID,
+                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
+            })
+        }
     }
 
 }
@@ -1772,12 +1802,12 @@ class Space implements space {
 
 let myUnits:any = []
 let enemyUnits:any = [];
-const myTeam: "white" | "black" = 'white'
+// const myTeam: "white" | "black" = 'white'
 let selUnit:unknown = null;
 let updateGame:() => void;
-let turn: "white" | "black" = myTeam;
+let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
-function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean}) {
+function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
     const { scene, camera } = useThree();
 
     const changeNumToCol = (columnNum:number) => {
@@ -1794,66 +1824,188 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
                 return "e"
         }
     }
+    
 
     useEffect(() => {
         const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
-        gameSpace.addToScene(wallVisible);
+        gameSpace.addToScene(wallVisible)
 
-        const initGame = () =>{
-            for(let i = 1; i <= 5; i++){
-                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
-            }
-            for(let i = 1; i <= 5; i++){
-                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
-            }
-            myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
-            myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
-            myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
-                                      
-            myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
-            myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
-            myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
-            myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
-            myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
-
-            myUnits.forEach((unit: any) => {
-                unit.addToScene(scene)
+        socket.on('moveUnit', ({unitID, moveData}:{unitID:string, moveData:string})=>{
+            enemyUnits.forEach((unit:Unit) => {
+                const arr= moveData.split("_")
+                const layer = parseInt(arr[2]) as 1 | 2 | 3 | 4 | 5;
+                const row = parseInt(arr[0]) as 1 | 2 | 3 | 4 | 5;
+                const column = parseInt(arr[1]) as 1 | 2 | 3 | 4 | 5;
+                const team = unitID.split("_")[0] as "white" | "black"
+                if(unit.ID == unitID){
+                    const targetCell = gameSpace.boards[layer-1].cells[row -1][column -1]
+                    targetCell.canGo = true;
+                    targetCell.canAttack = true
+                    unit.move(targetCell, scene, team, socket, false, target)
+                    turn = turn == "white" ? "black" : "white"
+                }
             })
+        })
 
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns(myTeam=="white" ? "black" : "white", 4, changeNumToCol(i), 5, gameSpace.boards))
-            }
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns(myTeam=="white" ? "black" : "white", 4, changeNumToCol(i), 4, gameSpace.boards))
-            }
+        socket.on('getEnemy', ({unit}:{unit:string[]}) => {
+            enemyUnits.forEach((unit:Unit) => {
+                unit.death = true;
+                scene.remove(unit.model)
+            })
+            updateGame()
+            console.log("at getEnemy : ",enemyUnits)
+            unit.forEach((unit_data:string) => {
+                const arr = unit_data.split("_")
+                console.log(arr)
+                switch(arr[1]){
+                    case 'PAWNS':
+                        const obj = new Pawns(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                        obj.ID = `${arr[0]}_PAWNS_${arr[2]}`
 
-            enemyUnits.push(new Unicorns( myTeam=="white" ? "black" : "white", 5, "a", 4, gameSpace.boards))
-            enemyUnits.push(new Bishops(  myTeam=="white" ? "black" : "white", 5, "b", 4, gameSpace.boards))
-            enemyUnits.push(new Queen(    myTeam=="white" ? "black" : "white", 5, "c", 4, gameSpace.boards))
-            enemyUnits.push(new Unicorns( myTeam=="white" ? "black" : "white", 5, "d", 4, gameSpace.boards))
-            enemyUnits.push(new Bishops(  myTeam=="white" ? "black" : "white", 5, "e", 4, gameSpace.boards))
-
-            enemyUnits.push(new Rooks(    myTeam=="white" ? "black" : "white", 5, "a", 5, gameSpace.boards))
-            enemyUnits.push(new Knights(  myTeam=="white" ? "black" : "white", 5, "b", 5, gameSpace.boards))
-            enemyUnits.push(new King(     myTeam=="white" ? "black" : "white", 5, "c", 5, gameSpace.boards))
-            enemyUnits.push(new Knights(  myTeam=="white" ? "black" : "white", 5, "d", 5, gameSpace.boards))
-            enemyUnits.push(new Rooks(    myTeam=="white" ? "black" : "white", 5, "e", 5, gameSpace.boards))
-
+                        enemyUnits.push(obj)
+                        break;
+                    case 'UNICORNS':
+                        const obj1 = new Unicorns(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj1.ID = `${arr[0]}_UNICORNS_${arr[2]}`
+                        enemyUnits.push(obj1)
+                        break;
+                    case 'BISHOPS':
+                        const obj2 = new Bishops(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj2.ID = `${arr[0]}_BISHOPS_${arr[2]}`
+                        enemyUnits.push(obj2)
+                        break;
+                    case 'QUEEN':
+                        const obj3 = new Queen(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj3.ID = `${arr[0]}_QUEEN_${arr[2]}`
+                        enemyUnits.push(obj3)
+                        break;
+                    case 'ROOKS':
+                        const obj4 = new Rooks(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj4.ID = `${arr[0]}_ROOKS_${arr[2]}`
+                        enemyUnits.push(obj4)
+                        break;
+                    case 'KNIGHTS':
+                        const obj5 = new Knights(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj5.ID = `${arr[0]}_KNIGHTS_${arr[2]}`
+                        enemyUnits.push(obj5)
+                        break;
+                    case 'KING':
+                        const obj6 = new King(
+                            arr[0] as "white" | "black",
+                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
+                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
+                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
+                            gameSpace.boards)
+                            obj6.ID = `${arr[0]}_KING_${arr[2]}`
+                        enemyUnits.push(obj6)
+                        break;
+                }
+            })
             enemyUnits.forEach((unit: any) => {
                 unit.addToScene(scene)
             })
+        })
+
+        const initGame = () =>{
+            if(myTeam == "white"){
+                console.log("white is my Team")
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
+                }
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
+                }
+                myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
+                myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
+                myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
+                myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
+                myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
+                                          
+                myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
+                myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
+                myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
+                myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
+                myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
+    
+                myUnits.forEach((unit: any) => {
+                    unit.addToScene(scene)
+                })
+
+                socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                })})
+
+            }else{
+                console.log("black is my Team")
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
+                }
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns("black", 4, changeNumToCol(i), 4, gameSpace.boards))
+                }
+
+                myUnits.push(new Unicorns( "black", 5, "a", 4, gameSpace.boards))
+                myUnits.push(new Bishops(  "black", 5, "b", 4, gameSpace.boards))
+                myUnits.push(new Queen(    "black", 5, "c", 4, gameSpace.boards))
+                myUnits.push(new Unicorns( "black", 5, "d", 4, gameSpace.boards))
+                myUnits.push(new Bishops(  "black", 5, "e", 4, gameSpace.boards))
+    
+                myUnits.push(new Rooks(    "black", 5, "a", 5, gameSpace.boards))
+                myUnits.push(new Knights(  "black", 5, "b", 5, gameSpace.boards))
+                myUnits.push(new King(     "black", 5, "c", 5, gameSpace.boards))
+                myUnits.push(new Knights(  "black", 5, "d", 5, gameSpace.boards))
+                myUnits.push(new Rooks(    "black", 5, "e", 5, gameSpace.boards))    
+
+                myUnits.forEach((unit: any) => {
+                    unit.addToScene(scene)
+                })
+
+                socket.emit('exchangeUnit', {unit : myUnits.map((unit:Unit) => {
+                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                })})
+            }
         }
 
         initGame()
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
+                console.log('update my Team')
                 unit.update(scene, window)
             })
             enemyUnits.forEach((unit:Unit) => {
+                console.log('update other team')
                 unit.update(scene, window)
             })
         }
@@ -1871,7 +2023,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
             if (intersects.length > 0) {
                 if(event.button == 0) {//좌클릭
                     for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn){
+                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
                             if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                 selUnit.hideCanCell()
                                 selUnit.unitDown()
@@ -1889,16 +2041,14 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
                             break;
                         }else if(intersects[i].object.userData?.cell instanceof Cell){
                             const cellData: Cell = intersects[i].object.userData.cell;
-                            console.log(cellData)
                             if(cellData.canGo){
                                 if(selUnit instanceof Unit){
-                                    selUnit.move(cellData, scene)
+                                    selUnit.move(cellData, scene, myTeam, socket, true, target)
                                     turn = turn == "white" ? "black" : "white"
-                                    // setTurn(turn != "white" ? "black" : "white")
                                 }
                                 selUnit = null;
                             }/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn){
+                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
                                 if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                     selUnit.hideCanCell()
                                     selUnit.unitDown()
@@ -1950,7 +2100,14 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
     return null;
 }
 
-export default function Chess(){
+
+interface Props {
+    team: "white" | "black",
+    socket: Socket<DefaultEventsMap, DefaultEventsMap>,
+    target:string
+}
+
+export default function Chess({team, socket, target}: Props){
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
@@ -1958,12 +2115,14 @@ export default function Chess(){
     //const [win, setWin] = useState<"white"|"black"|"none">("none");
 
     useEffect(() => {
+        console.log('target at Chess | ' + target)
+
         if(spaceRef.current){
             spaceRef.current.setAllVisible(visible)
             spaceRef.current.addToScene(wallVisible)
         }
 
-    },[turn, visible, wallVisible])
+    },[visible, wallVisible])
 
     return (
         <div className={styles.WRAP}>
@@ -2045,7 +2204,7 @@ export default function Chess(){
                         RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
                     }}
                 />
-                <ThreeBoard spaceRef={spaceRef} /*turn={turn} setTurn={setTurn}*/ wallVisible={wallVisible}/>
+                <ThreeBoard spaceRef={spaceRef} /*turn={turn} setTurn={setTurn}*/ wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
