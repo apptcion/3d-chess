@@ -2144,7 +2144,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,100,0]} rotation-x={Math.PI * 0.5}>
+                <mesh position={[0,200,0]} rotation-x={Math.PI * 0.5}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
@@ -2153,7 +2153,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,-100,0]} rotation-x={-Math.PI * 0.5}>
+                <mesh position={[0,-200,0]} rotation-x={-Math.PI * 0.5}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
@@ -2162,7 +2162,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[100,0,0]} rotation-y={-Math.PI * 0.5}>
+                <mesh position={[200,0,0]} rotation-y={-Math.PI * 0.5}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
@@ -2173,7 +2173,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[-100,0,0]} rotation-y={Math.PI * 0.5}>
+                <mesh position={[-200,0,0]} rotation-y={Math.PI * 0.5}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
@@ -2183,7 +2183,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,0,100]} rotation-y={Math.PI}>
+                <mesh position={[0,0,200]} rotation-y={Math.PI}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
@@ -2193,7 +2193,7 @@ export default function Chess({team, socket, target}: Props){
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,0,-100]}>
+                <mesh position={[0,0,-200]}>
                     <planeGeometry args={[200,200]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
