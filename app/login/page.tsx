@@ -10,7 +10,7 @@ export default function Login(){
             const username = document.querySelector('#id') as HTMLInputElement;
             const password = document.querySelector('#pw') as HTMLInputElement;
             
-            fetch('http://localhost:3000/login',{
+            fetch('https://chess-back.vercel.app/login/',{
                 method: "POST",
                 headers : {
                     "Content-Type" : "application/json"

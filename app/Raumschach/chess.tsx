@@ -2134,67 +2134,67 @@ export default function Chess({team, socket, target}: Props){
                 <axesHelper></axesHelper>
 
                 {/** temp */}
-                <directionalLight position={[0,100,0]}></directionalLight>
-                <directionalLight position={[0,-100,0]}></directionalLight>
-                <directionalLight position={[-100,-14,0]}></directionalLight>
-                <directionalLight position={[100,-14,0]}></directionalLight>
-                <directionalLight position={[0,-14,-100]}></directionalLight>
-                <directionalLight position={[0,-14,100]}></directionalLight>
-                <mesh position={[0,100,0]}>
+                <directionalLight position={[0,400,0]}    ></directionalLight>
+                <directionalLight position={[0,-400,0]}   ></directionalLight>
+                <directionalLight position={[-400,-14,0]} ></directionalLight>
+                <directionalLight position={[400,-14,0]}  ></directionalLight>
+                <directionalLight position={[0,-14,-400]} ></directionalLight>
+                <directionalLight position={[0,-14,400]}  ></directionalLight>
+                <mesh position={[0,200,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,200,0]} rotation-x={Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
+                <mesh position={[0,400,0]} rotation-x={Math.PI * 0.5}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
                 
-                <mesh position={[0,-100,0]}>
+                <mesh position={[0,-200,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,-200,0]} rotation-x={-Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
+                <mesh position={[0,-400,0]} rotation-x={-Math.PI * 0.5}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
                 
-                <mesh position={[100,-14,0]}>
+                <mesh position={[200,-14,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[200,0,0]} rotation-y={-Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-
-                
-                <mesh position={[-100,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[-200,0,0]} rotation-y={Math.PI * 0.5}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
+                <mesh position={[400,0,0]} rotation-y={-Math.PI * 0.5}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
 
+
                 
-                <mesh position={[0,-14,100]}>
+                <mesh position={[-200,-14,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,0,200]} rotation-y={Math.PI}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
+                <mesh position={[-400,0,0]} rotation-y={Math.PI * 0.5}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
 
                 
-                <mesh position={[0,-14,-100]}>
+                <mesh position={[0,-14,200]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
-                <mesh position={[0,0,-200]}>
-                    <planeGeometry args={[200,200]}></planeGeometry>
+                <mesh position={[0,0,400]} rotation-y={Math.PI}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
+                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
+                </mesh>
+
+                
+                <mesh position={[0,-14,-200]}>
+                    <boxGeometry></boxGeometry>
+                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
+                </mesh>
+                <mesh position={[0,0,-400]}>
+                    <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
                 </mesh>
     

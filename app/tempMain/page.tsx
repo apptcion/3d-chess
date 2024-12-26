@@ -14,7 +14,7 @@ function Match() {
 
 
     useEffect(() => {
-      const socket = io('http://localhost:3000');
+      const socket = io('https://chess-back.vercel.app');
     
       socket.emit('join');
     
@@ -40,7 +40,7 @@ export default function Main() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
-      fetch('http://localhost:3000/login/getPayload', {
+      fetch('https://chess-back.vercel.app/login/getPayload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
