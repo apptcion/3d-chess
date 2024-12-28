@@ -2159,7 +2159,8 @@ interface Props {
     target:string
 }
 
-export default function Chess({team, socket, target}: Props){
+export default function Chesspage({ params }: { params: Props }) {
+    const { team, socket, target } = params;
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
