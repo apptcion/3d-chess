@@ -153,7 +153,6 @@ class Cell implements cell{
     }
 
     addToScene(scene: THREE.Scene, wallVisible:boolean) {
-        console.log("wall to ",wallVisible)
         if(wallVisible){
             // const cubeMaterial = this.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
             // for(let i = 0; i < 6; i++){
@@ -311,7 +310,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     public update(scene:THREE.Scene, window:Window){
         scene.remove(this.model)
-        console.log(window)
         if(this.death){
             myUnits = myUnits.filter((unit:Unit) => {
                 return unit.ID != this.ID
@@ -329,7 +327,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
-        console.log(target)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
@@ -338,9 +335,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
             console.log("Kill")
-            if(myMove){
-                console.log("I kill enemy")
-            }
             updateGame()
         }
 
@@ -1395,7 +1389,6 @@ class Knights extends Unit{
                 material.color.set('yellow')
                 cell.canGo = true
                 if(cell.onUnit){
-                    console.log(`someCell has Unit, that is ${cell.onUnitTeam} and myTeam is ${this.team}`)
                     if(cell.onUnitTeam != this.team){
                         cell.makeAttackCell(this.showingCell)
                     }else{
@@ -1566,7 +1559,6 @@ class Pawns extends Unit{
                 const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
                 newObj.addToScene(scene)
                 myUnits.push(newObj)
-                console.log(myUnits)
                 if(myMove){    
                     socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                         return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
@@ -1581,7 +1573,6 @@ class Pawns extends Unit{
                 const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
                 newObj.addToScene(scene);
                 myUnits.push(newObj)
-                console.log(myUnits)
                 if(myMove){    
                     socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                         return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
@@ -1856,10 +1847,8 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 scene.remove(unit.model)
             })
             updateGame()
-            console.log("at getEnemy : ",enemyUnits)
             unit.forEach((unit_data:string) => {
                 const arr = unit_data.split("_")
-                console.log(arr)
                 switch(arr[1]){
                     case 'PAWNS':
                         const obj = new Pawns(
@@ -1941,7 +1930,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 
         const initGame = () =>{
             if(myTeam == "white"){
-                console.log("white is my Team")
                 for(let i = 1; i <= 5; i++){
                     myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
                 }
@@ -1969,7 +1957,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 })})
 
             }else{
-                console.log("black is my Team")
                 for(let i = 1; i <= 5; i++){
                     myUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
                 }
@@ -2003,11 +1990,9 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
-                console.log('update my Team')
                 unit.update(scene, window)
             })
             enemyUnits.forEach((unit:Unit) => {
-                console.log('update other team')
                 unit.update(scene, window)
             })
         }
@@ -2140,7 +2125,7 @@ export default function Chess({team, socket, target}: Props){
                 <directionalLight position={[400,-14,0]}  ></directionalLight>
                 <directionalLight position={[0,-14,-400]} ></directionalLight>
                 <directionalLight position={[0,-14,400]}  ></directionalLight>
-                <mesh position={[0,200,0]}>
+                {/* <mesh position={[0,200,0]}>
                     <boxGeometry></boxGeometry>
                     <meshBasicMaterial color={'black'}></meshBasicMaterial>
                 </mesh>
@@ -2196,7 +2181,7 @@ export default function Chess({team, socket, target}: Props){
                 <mesh position={[0,0,-400]}>
                     <planeGeometry args={[800,800]}></planeGeometry>
                     <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
+                </mesh> */}
     
                 {/** Code */}
                 <OrbitControls 
