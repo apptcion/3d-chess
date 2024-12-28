@@ -29,7 +29,9 @@ function Match() {
 
   return (
     <div>
-      {matched && team && socket && target &&<Chess team={team} socket={socket} target={target} />}
+      {matched && team && socket && target &&<Chess params={
+        {team,socket,target}
+      } />}
     </div>
   )
 }
