@@ -8,6 +8,7 @@ interface Props {
     socket: Socket<DefaultEventsMap, DefaultEventsMap>,
     target : string
 }
-export default function Chesspage ({team, socket, target}:Props){
-    return <Chess team={team} socket={socket} target={target}/>
-}
+export default function Chesspage({ searchParams }: { searchParams: Props }) {
+    const { team, socket, target } = searchParams;
+    return <Chess team={team} socket={socket} target={target} />;
+  }

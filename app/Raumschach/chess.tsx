@@ -2082,11 +2082,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, []);
+    }, [camera, scene, spaceRef, wallVisible, target]);
 
     return null;
 }
-
 
 interface Props {
     team: "white" | "black",

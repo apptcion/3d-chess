@@ -2119,7 +2119,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, []);
+    }, [camera, scene, spaceRef, wallVisible, target]);
 
     return null;
 }
@@ -2144,7 +2144,7 @@ export default function Chess({team, socket, target}: Props){
             spaceRef.current.addToScene(wallVisible)
         }
 
-    },[turn, visible, wallVisible])
+    },[visible, wallVisible, spaceRef])
 
     return (
         <div className={styles.WRAP}>
