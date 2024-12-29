@@ -117,11 +117,12 @@ function Match({mode}:{mode:string}) {
 }
 
 export default function Main() {
-  //const [username, setUsername] = useState(null)
+  const [username, setUsername] = useState(null)
   const mode = useRef<string | null>(null)
   const [gameStart, setGameStart] = useState(false)
 
   useEffect(() => {
+    console.log(username)
     const token = localStorage.getItem('token')
     if (token) {
       fetch('https://chessback.apptcion.site/login/getPayload', {
