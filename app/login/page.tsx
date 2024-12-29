@@ -10,7 +10,7 @@ export default function Login(){
             const username = document.querySelector('#id') as HTMLInputElement;
             const password = document.querySelector('#pw') as HTMLInputElement;
             
-            fetch('http://chessback.apptcion.site/login',{
+            fetch('https://chessback.apptcion.site/login/',{
                 method: "POST",
                 headers : {
                     "Content-Type" : "application/json"
@@ -20,27 +20,30 @@ export default function Login(){
                     password : password.value
                 })
             }).then((response) =>{
-                console.log(response)
                 if(response.ok){
                     return response.json()
                 }
             }).then((data) => {
-                console.log(data)
                 if(data.token != null){                
                     localStorage.setItem('token', data.token);
                     location.href = '/tempMain'
                 }else{
                     //TODO Error
+                    const wrap = document.querySelector('#wrap') as HTMLDivElement;
+                    const error = document.createElement('div')
+                    error.innerHTML = "Invaild Username or Password"
+                    error.style.color = 'red'
+                    wrap.appendChild(error)
                 }
             })
         })
     })
 
     return (
-        <main>
-            ID : <input type="text" id="id" placeholder='username'/><br />
-            PW : <input type="password" id="pw" placeholder='password'/><br />
-            <div id="sub_btn">Login</div>
-        </main>
+        <div>
+            ID : <input id="id"/><br />
+            PW : <input id="pw"/><br />
+            <div id="sub_btn">Button</div>
+        </div>
     )
 }

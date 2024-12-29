@@ -1,0 +1,125 @@
+.main{
+    position : absolute;
+    top : 0;
+    left : 0;
+    width : 100vw;
+    height : 100vh;
+    background-color: black;
+}
+
+.title{
+    color : white;
+    font-size : 5vw;
+    font-family: 'Pretendard-Regular', sans-serif;
+    font-weight: bolder;
+    margin-top : 20vh;
+    display : flex;
+    justify-content: center;
+}
+
+.selMode {
+    margin-top : 10vh;
+    display : flex;
+    justify-content: space-around;
+    width : 45vw;
+    position : relative;
+    left : 27.5vw;
+}
+
+.selected{
+    border : solid 2px white !important;
+}
+
+.mode{
+    border : solid 2px black;
+    color : white;
+    width : 20vw;
+    height : 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor : pointer;
+    transition: 0.3s;
+    font-size : 3vw;
+    position: relative;
+    left : 0.5vw;
+}
+
+.mode:hover{
+    border : solid 2px white
+}
+
+.start {
+  width : 10vw;
+  /* in scss with just one variable i can change opacity with rgba(variable, opacity) but in css it's not possible so i have used three seperate variables */
+  /* with hue-rotate color can be changed */
+  --main-color: rgb(46, 213, 115);
+  --main-bg-color: rgba(46, 213, 116, 0.36);
+  --pattern-color: rgba(46, 213, 116, 0.073);
+
+  /* change this rotation value */
+  filter: hue-rotate(0deg);
+
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  background: radial-gradient(
+      circle,
+      var(--main-bg-color) 0%,
+      rgba(0, 0, 0, 0) 95%
+    ),
+    linear-gradient(var(--pattern-color) 1px, transparent 1px),
+    linear-gradient(to right, var(--pattern-color) 1px, transparent 1px);
+  background-size:
+    cover,
+    15px 15px,
+    15px 15px;
+  background-position:
+    center center,
+    center center,
+    center center;
+  border-image: radial-gradient(
+      circle,
+      var(--main-color) 0%,
+      rgba(0, 0, 0, 0) 100%
+    )
+    1;
+  border-width: 1px 0 1px 0;
+  color: var(--main-color);
+  padding: 1rem 3rem;
+  font-weight: 700;
+  font-size: 1.5rem;
+  transition: background-size 0.2s ease-in-out;
+
+  margin-top : 5vh;
+  position: relative;
+  left : 45vw;
+  font-size: 1.2vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.start:hover {
+  background-size:
+    cover,
+    10px 10px,
+    10px 10px;
+}
+.start:active {
+  filter: hue-rotate(250deg);
+}
+  
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'STAR_FONT';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-5@1.0/HakgyoansimByeolbichhaneulTTF-B.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}

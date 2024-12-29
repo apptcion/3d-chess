@@ -2013,7 +2013,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, []);
+    }, [camera,scene,spaceRef,wallVisible]);
 
     return null;
 }

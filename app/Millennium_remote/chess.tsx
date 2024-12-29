@@ -168,7 +168,7 @@ class Cell implements cell{
     }
 
     addToScene(scene: THREE.Scene, wallVisible:boolean) {
-        console.log("wall to ",wallVisible)
+        
         if(wallVisible){
             // const cubeMaterial = this.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
             // for(let i = 0; i < 6; i++){
@@ -342,7 +342,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
             //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
-            console.log(target)
             const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
@@ -351,9 +350,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
             if(cell.canAttack && cell.piece){
                 cell.piece.death = true;
                 console.log("Kill")
-                if(myMove){
-                    console.log("I kill enemy")
-                }
                 updateGame()
             }
     
@@ -429,7 +425,7 @@ class Queen extends Unit {
         public layer: number,
         board: Array<Board>
     ){
-        super(team,row,column,layer, board, "QUEEN", false, `${team}_BISHOPS_${uuidv4()}`)
+        super(team,row,column,layer, board, "QUEEN", false, `${team}_QUEEN_${uuidv4()}`)
     }
 
     public addToScene(scene: THREE.Scene): void {
@@ -1514,7 +1510,6 @@ class Knights extends Unit{
                 material.color.set('yellow')
                 cell.canGo = true
                 if(cell.onUnit){
-                    console.log(`someCell has Unit, that is ${cell.onUnitTeam} and myTeam is ${this.team}`)
                     if(cell.onUnitTeam != this.team){
                         cell.makeAttackCell(this.showingCell)
                     }else{
@@ -1608,7 +1603,6 @@ class Pawns extends Unit{
             }
 
             if(this.convertCol() != 1){
-                console.log(thisLayer[this.row][this.convertCol() -2])
                 if(thisLayer[this.row][this.convertCol() -2].onUnit && thisLayer[this.row][this.convertCol() -2].onUnitTeam != this.team){
                     thisLayer[this.row][this.convertCol()-2].makeAttackCell(this.showingCell)
                 }
@@ -1674,7 +1668,6 @@ class Pawns extends Unit{
             }
 
             if(this.convertCol() != 1){
-                console.log(thisLayer[this.row -2][this.convertCol() -2])
                 if(thisLayer[this.row-2][this.convertCol() -2].onUnit && thisLayer[this.row-2][this.convertCol() -2].onUnitTeam != this.team){
                     thisLayer[this.row-2][this.convertCol()-2].makeAttackCell(this.showingCell)
                 }
@@ -1703,21 +1696,6 @@ class Pawns extends Unit{
     }
 
    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
-            if(this.team == myTeam && cell.row == 8 && cell.layer == 3){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                myUnits.push(new Queen(myTeam, this.row, this.column, this.layer, this.board))
-                
-            updateGame()
-            }else if(this.team != myTeam && cell.row == 1 && cell.layer == 1){
-                enemyUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                enemyUnits.push(new Queen(myTeam, this.row, this.column, this.layer, this.board))   
-                
-            updateGame() 
-            }
     
             //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
             const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
@@ -1727,7 +1705,7 @@ class Pawns extends Unit{
     
             if(cell.canAttack && cell.piece){
                 cell.piece.death = true;
-                console.log("Kill!!!")
+                console.log("Kill")
                 updateGame()
             }
     
@@ -1763,11 +1741,11 @@ class Pawns extends Unit{
                     myUnits = myUnits.filter((unit:Unit) => {
                         return unit.ID != this.ID
                     })
+                    
                     scene.remove(this.model)
                     const newObj = new Queen(myTeam, 8 , this.column, 3, this.board)
                     newObj.addToScene(scene)
                     myUnits.push(newObj)
-                    console.log(myUnits)
                     if(myMove){    
                         socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                             return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
@@ -1782,7 +1760,6 @@ class Pawns extends Unit{
                     const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
                     newObj.addToScene(scene);
                     myUnits.push(newObj)
-                    console.log(myUnits)
                     if(myMove){    
                         socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                             return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
@@ -1824,7 +1801,6 @@ class Space implements space {
                 const columns: Array<Cell> = [];
 
                 for (let column = 1; column <= 8; column++) {
-                    console.log(`layer : ${layer}, row : ${row}, column : ${column}`)
                     columns.push(new Cell(null, row, column, layer, isWhite, cellID++, true));
                     isWhite = !isWhite;
                 }
@@ -1837,7 +1813,6 @@ class Space implements space {
         }
 
         this.boards = Boards;
-        console.log(this.boards)
     }
 
     public showWall(){
@@ -1894,14 +1869,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 return "h"
         }
     }
-
     useEffect(() => {
-
-        turn = myTeam;
         const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
         gameSpace.addToScene(wallVisible);
-
         
         socket.on('moveUnit', ({unitID, moveData}:{unitID:string, moveData:string})=>{
             enemyUnits.forEach((unit:Unit) => {
@@ -1921,15 +1892,14 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         })
 
         socket.on('getEnemy', ({unit}:{unit:string[]}) => {
+            console.log('getEnemy')
             enemyUnits.forEach((unit:Unit) => {
                 unit.death = true;
                 scene.remove(unit.model)
             })
             updateGame()
-            console.log("at getEnemy : ",enemyUnits)
             unit.forEach((unit_data:string) => {
                 const arr = unit_data.split("_")
-                console.log(arr)
                 switch(arr[1]){
                     case 'PAWNS':
                         const obj = new Pawns(
@@ -2000,12 +1970,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         })
 
         const initGame = () =>{
-            if(myTeam == "white"){
-                console.log("white is my Team")
+            if(myTeam == "white"){         
                 for(let i = 1; i <= 8; i++){
                     myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
                 }
-
                 myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
                 myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
                 myUnits.push(new Bishops( myTeam, 1, "c", 1, gameSpace.boards))
@@ -2015,16 +1983,20 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 myUnits.push(new Knights( myTeam, 1, "g", 1, gameSpace.boards))
                 myUnits.push(new Rooks(   myTeam, 1, "h", 1, gameSpace.boards))
 
-                myUnits.forEach((unit: any) => {
+                myUnits.forEach((unit: Unit) => {
                     unit.addToScene(scene)
                 })
 
-                socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                })})
+                const intervalID = setInterval(() => {
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                    if(enemyUnits.length == 16){
+                        clearInterval(intervalID)
+                    }
+                },500)
 
             }else{
-                console.log("black is my Team")
                 for(let i = 1; i <= 8; i++){
                     myUnits.push(new Pawns("black", 7, changeNumToCol(i), 3, gameSpace.boards))
                 }
@@ -2041,13 +2013,16 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 myUnits.forEach((unit: any) => {
                     unit.addToScene(scene)
                 })
-
-                socket.emit('exchangeUnit', {unit : myUnits.map((unit:Unit) => {
-                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                })})
+                const intervalID = setInterval(() => {
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                    if(enemyUnits.length == 16){
+                        clearInterval(intervalID)
+                    }
+                },500)
             }
         }
-
         initGame()
 
         updateGame = () => {
@@ -2072,7 +2047,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
             if (intersects.length > 0) {
                 if(event.button == 0) {//좌클릭
                     for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn){
+                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
                             if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                 selUnit.hideCanCell()
                                 selUnit.unitDown()
@@ -2090,18 +2065,16 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                             break;
                         }else if(intersects[i].object.userData?.cell instanceof Cell){
                             const cellData: Cell = intersects[i].object.userData.cell;
-                            console.log(cellData)
+                            
                             if(cellData.canGo){
-                                console.log("Can Move!!")
-                                console.log(selUnit)
+                                
                                 if(selUnit instanceof Unit){
                                     selUnit.move(cellData, scene, myTeam, socket, true, target)
                                     turn = turn == "white" ? "black" : "white"
-                                    //setTurn(turn != "white" ? "black" : "white")
                                 }
                                 selUnit = null;
                             }/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn){
+                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
                                 if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                     selUnit.hideCanCell()
                                     selUnit.unitDown()
@@ -2138,9 +2111,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 }
             }
         };
-        //const disableContextMenu = (event: MouseEvent) => event.preventDefault();
         document.addEventListener("mousedown", clickHandler);
-        //document.addEventListener("contextmenu", disableContextMenu);
 
         camera.position.set(0,50,0);
         camera.lookAt(0, 0, 0);
@@ -2148,7 +2119,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, []);
+    }, [camera, scene, spaceRef, wallVisible, target]);
 
     return null;
 }
@@ -2168,12 +2139,13 @@ export default function Chesspage({ params }: { params: Props }) {
    // const [turn, setTurn] = useState<"white"|"black">(myTeam);
 
     useEffect(() => {
+
         if(spaceRef.current){
             spaceRef.current.setAllVisible(visible)
             spaceRef.current.addToScene(wallVisible)
         }
 
-    },[turn, visible, wallVisible])
+    },[visible, wallVisible, spaceRef])
 
     return (
         <div className={styles.WRAP}>
@@ -2249,7 +2221,7 @@ export default function Chesspage({ params }: { params: Props }) {
                         checked={wallVisible}
                         onChange={(e) => setWallVisible(e.target.checked)}
                      /> </div>
-                    <div id="showTurn">{turn}</div>
+                    <div id="showTurn">{team}</div>
             </div>
         </div>
     )
