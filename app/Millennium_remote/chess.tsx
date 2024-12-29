@@ -346,6 +346,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
             nowCell.piece = null
+
+            scene = scene;
+            myTeam = myTeam;
+            target = target;
+
     
             if(cell.canAttack && cell.piece){
                 cell.piece.death = true;

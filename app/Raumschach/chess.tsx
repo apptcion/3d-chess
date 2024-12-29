@@ -308,7 +308,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         this.showingCell = [];
     }
 
-    public update(scene:THREE.Scene, window:Window){
+    public update(scene:THREE.Scene){
         scene.remove(this.model)
         if(this.death){
             myUnits = myUnits.filter((unit:Unit) => {
@@ -2000,10 +2000,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
-                unit.update(scene, window)
+                unit.update(scene)
             })
             enemyUnits.forEach((unit:Unit) => {
-                unit.update(scene, window)
+                unit.update(scene)
             })
         }
 

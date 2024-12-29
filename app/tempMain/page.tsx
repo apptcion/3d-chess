@@ -25,14 +25,13 @@ class Dot{
   }
 
   draw(context:CanvasRenderingContext2D){
-    let scale, x2d, y2d;
     this.z -= this.speed
     if (this.z < -this.fov) {
       this.z += (innerWidth+innerHeight)/2;
     }
-    scale = this.fov / (this.fov + this.z);
-    x2d = this.x * scale + innerWidth/2;
-    y2d = this.y * scale + innerHeight/2;
+    const scale = this.fov / (this.fov + this.z);
+    const x2d = this.x * scale + innerWidth/2;
+    const y2d = this.y * scale + innerHeight/2;
     context.fillRect(x2d, y2d, scale*4, scale*3);
   }
 }
@@ -118,7 +117,7 @@ function Match({mode}:{mode:string}) {
 }
 
 export default function Main() {
-  const [username, setUsername] = useState(null)
+  //const [username, setUsername] = useState(null)
   const mode = useRef<string | null>(null)
   const [gameStart, setGameStart] = useState(false)
 
