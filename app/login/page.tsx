@@ -37,10 +37,10 @@ export default function Login(){
     })
 
     return (
-        <div>
-            ID : <input id="id"/><br />
-            PW : <input id="pw"/><br />
-            <div id="sub_btn">Button</div>
-        </div>
+        <main>
+            ID : <input type="text" id="id" placeholder='username'/><br />
+            PW : <input type="password" id="pw" placeholder='password'/><br />
+            <div id="sub_btn">Login</div>
+        </main>
     )
 }
