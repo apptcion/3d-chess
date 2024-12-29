@@ -1952,9 +1952,14 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                     unit.addToScene(scene)
                 })
 
-                socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                })})
+                const intervalID = setInterval(() => {
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                    if(enemyUnits.length == 20){
+                        clearInterval(intervalID)
+                    }
+                },500)
 
             }else{
                 for(let i = 1; i <= 5; i++){
@@ -1980,9 +1985,14 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                     unit.addToScene(scene)
                 })
 
-                socket.emit('exchangeUnit', {unit : myUnits.map((unit:Unit) => {
-                    return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                })})
+                const intervalID = setInterval(() => {
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                    if(enemyUnits.length == 20){
+                        clearInterval(intervalID)
+                    }
+                },500)
             }
         }
 
