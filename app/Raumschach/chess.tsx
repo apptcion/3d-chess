@@ -326,11 +326,15 @@ abstract class Unit{ // == piece ( 체스 기물 )
     }
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
-        //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+
+        scene = scene;
+        myTeam = myTeam;
+        console.log(target)
+
 
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;

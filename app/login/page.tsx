@@ -1,5 +1,6 @@
 'use client'
 import {useEffect} from 'react'
+import styles from '../../public/css/login.module.css'
 
 export default function Login(){
 
@@ -40,10 +41,10 @@ export default function Login(){
     })
 
     return (
-        <div>
+        <main className={styles.main}>
             ID : <input id="id"/><br />
             PW : <input id="pw"/><br />
             <div id="sub_btn">Button</div>
-        </div>
+        </main>
     )
 }

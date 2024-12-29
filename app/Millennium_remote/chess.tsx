@@ -349,7 +349,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
             scene = scene;
             myTeam = myTeam;
-            target = target;
+            console.log(target)
 
     
             if(cell.canAttack && cell.piece){
