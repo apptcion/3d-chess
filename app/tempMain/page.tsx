@@ -107,8 +107,12 @@ function Match({mode}:{mode:string}) {
             <div className={matchStyle.mode}>{mode} mode </div>
           </div>
         </div> }
-      {matched && team && socket && target && mode=="Raumschach" && <Chess_Raumschach team={team} socket={socket} target={target} />}
-      {matched && team && socket && target && mode=="Millennium" && <Chess_Millennium team={team} socket={socket} target={target} />}
+      {matched && team && socket && target && mode=="Raumschach" && <Chess_Raumschach params={
+        {team,socket,target}
+      } />}
+      {matched && team && socket && target && mode=="Millennium" && <Chess_Millennium params={
+        {team,socket,target}
+      } />}
     </div>
   )
 }
