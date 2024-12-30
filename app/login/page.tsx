@@ -50,7 +50,7 @@ class Star {
 
     draw(ctx:CanvasRenderingContext2D) {
         ctx.beginPath();
-        let gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r);
+        //const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r);
         // gradient.addColorStop(0, `rgba(255,255,255,${this.nowGradient / 100})`);
         // gradient.addColorStop(this.shadowSize, `rgba(255,255,255,${(this.nowGradient / 100) * 0.6})`);
         // gradient.addColorStop(1, `rgba(255,255,255,${this.nowGradient / 100})`);
@@ -103,7 +103,7 @@ const config = {
     height : 1,
 };
 
-const starsDOM = document.getElementById('stars');
+//const starsDOM = document.getElementById('stars');
 let stars:Array<Star> = [];
 let meteors:Array<Meteor> = [];
 let animeFrameID = 0;
