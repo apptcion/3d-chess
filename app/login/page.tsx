@@ -2,7 +2,6 @@
 import styles from '../../public/css/login.module.css'
 
 import {useEffect, useRef} from 'react'
-import logo from '../../public/img/logo.svg'
 
 //Space
 class Star {
