@@ -21,7 +21,7 @@ class Dot{
     this.x = Math.random()*window.innerWidth - window.innerWidth/2;
     this.y = Math.random()*window.innerHeight - window.innerHeight/2;
     this.z = (window.innerWidth+window.innerHeight)/Math.random();
-    this.speed = Math.random()*8;
+    this.speed = Math.random()*8+2;
   }
 
   draw(context:CanvasRenderingContext2D){
@@ -32,7 +32,11 @@ class Dot{
     const scale = this.fov / (this.fov + this.z);
     const x2d = this.x * scale + innerWidth/2;
     const y2d = this.y * scale + innerHeight/2;
-    context.fillRect(x2d, y2d, scale*4, scale*3);
+    if(this.x < window.innerWidth /2){
+      context.fillRect(x2d, y2d, scale*4, scale*3);
+    }else{    
+      context.fillRect(x2d, y2d, scale*4, scale*3);
+    }
   }
 }
 
@@ -163,6 +167,8 @@ export default function Main() {
     startGame.addEventListener('click', () => { 
       if(mode.current != null){
         setGameStart(true)
+      }else{
+        alert("select Mode")
       }
     })
 
