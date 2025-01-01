@@ -13,7 +13,7 @@ class Dot{
   
   public x:number;
   public y:number;
-  public z:number;
+  public z:number
   public fov = 150;
   public speed = 0;
 
@@ -187,6 +187,7 @@ export default function Main() {
             <div id="Raumschach" className={`${styles.Raumschach} ${styles.mode}`}>Raumschach</div>
           </div>
           <button id="startGame" className={styles.start}>Start Game</button>
+          <a href="/rule" className={styles.howToPlay}>How to play</a>
         </div>
       }
     </main>

@@ -171,16 +171,6 @@ class Cell implements cell{
         const material = this.mesh.material as THREE.MeshBasicMaterial;
         material.transparent = true;
         material.opacity = visible ? this.normalOpacity : 0.1; // 투명도 설정
-
-        // const cube_material = this.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
-        // for(let i = 0; i < 5; i++){
-        //     if(i != 3){
-        //         cube_material[i].side = THREE.FrontSide
-        //     }else{
-        //         cube_material[i].opacity = 0
-        //     }
-        // }
-
         const cube_material = this.cubeMesh.material as THREE.MeshBasicMaterial
         cube_material.opacity = visible ? 0.2 : 0.1
     }
@@ -192,14 +182,6 @@ class Cell implements cell{
         material.transparent = true;
         this.normalOpacity = material.opacity = this.color == "black" ? colorConfig.opacity.black : colorConfig.opacity.white   
         material.color.set('yellow')
-
-        // const cube_material = this.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
-
-        // for(let i = 0; i < 6; i++){    
-        //     cube_material[i].transparent = true;
-        //     cube_material[i].color.set('yellow');
-        // }
-
         const cube_material = this.cubeMesh.material as THREE.MeshBasicMaterial
         cube_material.color.set('yellow')
         showingCell.push(this)
@@ -210,14 +192,6 @@ class Cell implements cell{
         this.canAttack = true;
         const material = this.mesh.material as THREE.MeshBasicMaterial;
         material.color.set('red')
-
-        // const cube_material = this.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
-
-        // for(let i = 0; i < 6; i++){    
-        //     cube_material[i].transparent = true;
-        //     cube_material[i].color.set('red');
-        // }
-
         const cube_material = this.cubeMesh.material as THREE.MeshBasicMaterial
         cube_material.color.set('red')
         showingCell.push(this)
@@ -308,7 +282,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         this.showingCell = [];
     }
 
-    public update(scene:THREE.Scene){
+    public update(scene:THREE.Scene, myTeam:string){
         scene.remove(this.model)
         if(this.death){
             myUnits = myUnits.filter((unit:Unit) => {
@@ -317,8 +291,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
             enemyUnits = enemyUnits.filter((unit:Unit) => {
                 return unit.ID != this.ID
             })
-            if(this.piece == "KING"){
-                //SetGameOver
+
+            if(this.piece == "KING" && this.team == myTeam){
+                console.log("Kill King")
+                alert("you are lose")
+                //setGameOver
             }
         }else{        
             scene.add(this.model)
@@ -330,17 +307,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
-
-        scene = scene;
-        myTeam = myTeam;
-        console.log(target)
-
-
-        if(cell.canAttack && cell.piece){
-            cell.piece.death = true;
-            console.log("Kill")
-            updateGame()
-        }
 
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
@@ -372,7 +338,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
             clearInterval(animeId)
         }, 300)
         this.wasHandled = true;
-
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
+            console.log("Kill")
+            cell.piece.update(scene, myTeam)
+        }
         if(myMove){
             socket.emit('moveUnit', {
                 unitID: this.ID,
@@ -1521,12 +1491,6 @@ class Pawns extends Unit{
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
 
-        if(cell.canAttack && cell.piece){
-            cell.piece.death = true;
-            console.log("Kill!!!")
-            updateGame()
-        }
-
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
         cell.onUnitTeam = this.team;
@@ -1586,6 +1550,11 @@ class Pawns extends Unit{
             }
         }, 300)
         this.wasHandled = true;
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
+            console.log("Kill")
+            cell.piece.update(scene, myTeam)
+        }
         if(myMove){
             socket.emit('moveUnit', {
                 unitID: this.ID,
@@ -1839,7 +1808,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                     const targetCell = gameSpace.boards[layer-1].cells[row -1][column -1]
                     targetCell.canGo = true;
                     targetCell.canAttack = true
-                    unit.move(targetCell, scene, team, socket, false, target)
+                    unit.move(targetCell, scene, myTeam, socket, false, target)
                     turn = turn == "white" ? "black" : "white"
                 }
             })
@@ -2004,10 +1973,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
-                unit.update(scene)
+                unit.update(scene, myTeam)
             })
             enemyUnits.forEach((unit:Unit) => {
-                unit.update(scene)
+                unit.update(scene, myTeam)
             })
         }
 
@@ -2115,7 +2084,6 @@ export default function Chess({team, socket, target}: Props){
     //const [win, setWin] = useState<"white"|"black"|"none">("none");
 
     useEffect(() => {
-        console.log('target at Chess | ' + target)
 
         if(spaceRef.current){
             spaceRef.current.setAllVisible(visible)

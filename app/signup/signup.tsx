@@ -1,5 +1,5 @@
 'use client'
-import styles from '../../public/css/login.module.css'
+import styles from '../../public/css/signup.module.css'
 import ErrorPage from './error'
 
 import {useEffect, useRef, useState} from 'react'
@@ -118,7 +118,7 @@ for (let i = 0; i < config.amount; i++) {
 export default function Login(){
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const [error, SetError] = useState<string | null>(null)
+    const [error, SetError] = useState<string | null>(null);
 
     useEffect(() => {
 
@@ -143,7 +143,7 @@ export default function Login(){
                 meteors = meteors.filter((meteor) => {
                     meteor.updatePosition();
                     meteor.draw(context);
-                    return meteor.x > 0 && meteor.y < window.innerHeight * config.height; // 조건을 만족하는 메테오만 유지
+                    return meteor.x < window.innerWidth && meteor.y < window.innerHeight * config.height; // 조건을 만족하는 메테오만 유지
                 });
                 if((Math.random() * 200 <= 1)) {
                     meteors.push(new Meteor());
@@ -167,13 +167,13 @@ export default function Login(){
         };
         
 
-        const button = document.querySelector('#sub_btn') as HTMLDivElement;
-
-        const loginHandler = () => {
+        const button = document.querySelector('#create') as HTMLDivElement
+        button.addEventListener('click', () => {
             const username = document.querySelector('#id') as HTMLInputElement;
             const password = document.querySelector('#pw') as HTMLInputElement;
+
             if(username.value && password.value){
-                fetch('https://chessback.apptcion.site/login/',{
+                fetch('https://chessback.apptcion.site/login/add',{
                     method: "POST",
                     headers : {
                         "Content-Type" : "application/json"
@@ -182,34 +182,32 @@ export default function Login(){
                         username : username.value,
                         password : password.value
                     })
-                }).then((response) =>{
+                }).then(response => {
                     if(response.ok){
                         return response.json()
                     }
-                }).then((data) => {
-                    if(data.token != null){                
-                        localStorage.setItem('token', data.token);
-                        location.href = '/tempMain'
+                }).then(data => {
+                    console.log(data)
+                    if(!data.status){
+                        location.href="/login"
                     }else{
-                        //TODO Error
-                        SetError("Username or Password is invalid")
+                        SetError(data.cause)
+                        console.log(`${data.status}, cause ${data.cause}`)
                     }
                 })
             }
-        }
-        button.addEventListener('click', loginHandler)
+        })
 
         resizeHandler()
         window.addEventListener('resize', resizeHandler)
         console.log(styles.canvas)
         return () => {
-            button.removeEventListener('click', loginHandler)
             window.removeEventListener('resize', resizeHandler)
         }
     },[])
 
     return (
-        <main className={styles.main} id="main">
+        <main className={styles.main}>
             <canvas id="stars" ref={canvasRef} className={styles.canvas}></canvas>
             <div className={styles.loginForm}>
                 <img src='/img/logo.svg' className={styles.logo}/>
@@ -218,13 +216,10 @@ export default function Login(){
                     <div><input id="pw" type="password" placeholder='password'/></div>
                 </div>
                 <div className={styles.login_wrap}>
-                    <div id="sub_btn" className={styles.login}>Login</div>
-                    <div id="go_signup" className={styles.signup} onClick={() => {
-                        location.href="/signup"
-                    }}>Sign up</div>
+                    <div id="create" className={styles.create}>Create Account</div>
                 </div>
             </div>
-            {error && <ErrorPage params={{cause : error}}/>}
+            {error && <ErrorPage params={{cause:error}} />}
         </main>
     )
 }

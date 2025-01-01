@@ -109,6 +109,23 @@
 .start:active {
   filter: hue-rotate(250deg);
 }
+
+.howToPlay{
+  margin-top : 1vh;
+  position: relative;
+  color : gray;
+  font-weight: bold;
+  font-size : 0.7vw;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  left : 47.5vw;
+  width : 5vw;
+}
+
+.howToPlay:hover{
+  text-decoration: underline;
+}
   
 @font-face {
     font-family: 'Pretendard-Regular';
