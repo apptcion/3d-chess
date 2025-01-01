@@ -331,6 +331,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
             //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
+            console.log(`myTeam at Unit.move : ${myTeam}`)
             const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
@@ -341,6 +342,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
             cell.onUnitTeam = this.team;
             cell.piece = this;
     
+            if(cell.canAttack && cell.piece){
+                cell.piece.death = true;
+                console.log("Kill")
+                cell.piece.update(scene, myTeam)
+            }
             //이동 가능 칸 숨기기
             this.hideCanCell()
             //기물 옮기기 애니메이션
@@ -366,12 +372,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
                 clearInterval(animeId)
             }, 300)
             this.wasHandled = true;
-
-            if(cell.canAttack && cell.piece){
-                cell.piece.death = true;
-                console.log("Kill")
-                cell.piece.update(scene, myTeam)
-            }
     
             if(myMove){
                 socket.emit('moveUnit', {
@@ -1685,11 +1685,18 @@ class Pawns extends Unit{
     }
 
    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
+            console.log(`myTeam at Unit.move : ${myTeam}`)
             //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
             const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
             nowCell.piece = null
+
+            if(cell.canAttack && cell.piece){
+                cell.piece.death = true;
+                console.log("Kill")
+                cell.piece.update(scene, myTeam)
+            }
     
             //이동한 칸에 기물 정보 추가
             cell.onUnit = true;
@@ -2057,6 +2064,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                             if(cellData.canGo){
                                 
                                 if(selUnit instanceof Unit){
+                                    console.log(`selUnit Team ${myTeam}`)
                                     selUnit.move(cellData, scene, myTeam, socket, true, target)
                                     turn = turn == "white" ? "black" : "white"
                                 }
