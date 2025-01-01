@@ -239,7 +239,7 @@ class Board implements board{
 ////////////////////////////////////////////////////////
 
 abstract class Unit{ // == piece ( 체스 기물 )
-    public death:boolean;
+    public death:boolean = false;
     protected showingCell:Array<Cell> = []
     public model:THREE.Group;
     public turn:"white" | "black" = "white"
@@ -253,7 +253,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         public wasHandled:boolean,
         public ID:string
     ){
-        this.death = false;
+        
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnit = true;
         board[layer - 1].cells[row - 1][this.convertCol() - 1].onUnitTeam = team
         board[layer - 1].cells[row - 1][this.convertCol() - 1].piece = this
@@ -306,6 +306,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     public update(scene:THREE.Scene, myTeam:string){
         scene.remove(this.model)
+        console.log(this.ID, this.death)
         if(this.death){
             ////Temp
             if(this.team == myTeam){
@@ -329,59 +330,56 @@ abstract class Unit{ // == piece ( 체스 기물 )
         }
     }
 
-        move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
-            //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
-            console.log(`myTeam at Unit.move : ${myTeam}`)
-            const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
-            nowCell.onUnit = false;
-            nowCell.onUnitTeam = "none"
-            nowCell.piece = null
-            console.log(target)
-    
-            //이동한 칸에 기물 정보 추가
-            cell.onUnit = true;
-            cell.onUnitTeam = this.team;
-            cell.piece = this;
-    
-            //이동 가능 칸 숨기기
-            this.hideCanCell()
-            //기물 옮기기 애니메이션
-            const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-            const onceY = ( this.layer - cell.layer ) / 30;
-            const onceZ = ( this.row - cell.row ) / 30;
-    
-            //내 위치 변경
-            this.layer = cell.layer;
-            this.row = cell.row;
-            this.column = cell.column;
-            
-            const animeId = setInterval(() => {
-                this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-                this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-                this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
-            }, 10)
-    
-            setTimeout(() => {
-                this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-                this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
-                this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
-                clearInterval(animeId)
-            }, 300)
-            this.wasHandled = true;
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
+        //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
+        console.log(`myTeam at Unit.move : ${myTeam}`)
+        const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
+        nowCell.onUnit = false;
+        nowCell.onUnitTeam = "none"
+        nowCell.piece = null
 
-            if(cell.canAttack && cell.piece){
-                cell.piece.death = true;
-                console.log("Kill")
-                cell.piece.update(scene, myTeam)
-            }
-    
-            if(myMove){
-                socket.emit('moveUnit', {
-                    unitID: this.ID,
-                    moveData: `${this.row}_${this.convertCol()}_${this.layer}`
-                })
-            }
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
+            console.log("Kill")
+            cell.piece.update(scene, myTeam)
         }
+        //이동한 칸에 기물 정보 추가
+        cell.onUnit = true;
+        cell.onUnitTeam = this.team;
+        cell.piece = this;
+
+        //이동 가능 칸 숨기기
+        this.hideCanCell()
+        //기물 옮기기 애니메이션
+        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
+        const onceY = ( this.layer - cell.layer ) / 30;
+        const onceZ = ( this.row - cell.row ) / 30;
+
+        //내 위치 변경
+        this.layer = cell.layer;
+        this.row = cell.row;
+        this.column = cell.column;
+        
+        const animeId = setInterval(() => {
+            this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
+            this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
+            this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
+        }, 10)
+
+        setTimeout(() => {
+            this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
+            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
+            this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
+            clearInterval(animeId)
+        }, 300)
+        this.wasHandled = true;
+        if(myMove){
+            socket.emit('moveUnit', {
+                unitID: this.ID,
+                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
+            })
+        }
+    }
 
     public convertCol(){
         switch(this.column){
@@ -1693,11 +1691,11 @@ class Pawns extends Unit{
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
             nowCell.piece = null
-    
+
             if(cell.canAttack && cell.piece){
                 cell.piece.death = true;
                 console.log("Kill")
-                updateGame()
+                cell.piece.update(scene, myTeam)
             }
     
             //이동한 칸에 기물 정보 추가
@@ -1760,12 +1758,6 @@ class Pawns extends Unit{
                 }
             }, 300)
             this.wasHandled = true;
-
-            if(cell.canAttack && cell.piece){
-                cell.piece.death = true;
-                console.log("Kill")
-                cell.piece.update(scene, myTeam)
-            }
             if(myMove){
                 socket.emit('moveUnit', {
                     unitID: this.ID,
@@ -1891,10 +1883,9 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         socket.on('getEnemy', ({unit}:{unit:string[]}) => {
 
             enemyUnits.forEach((unit:Unit) => {
-                unit.death = true;
                 scene.remove(unit.model)
             })
-            updateGame()
+            enemyUnits = []
             unit.forEach((unit_data:string) => {
                 const arr = unit_data.split("_")
                 switch(arr[1]){
