@@ -342,11 +342,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
             cell.onUnitTeam = this.team;
             cell.piece = this;
     
-            if(cell.canAttack && cell.piece){
-                cell.piece.death = true;
-                console.log("Kill")
-                cell.piece.update(scene, myTeam)
-            }
             //이동 가능 칸 숨기기
             this.hideCanCell()
             //기물 옮기기 애니메이션
@@ -372,6 +367,12 @@ abstract class Unit{ // == piece ( 체스 기물 )
                 clearInterval(animeId)
             }, 300)
             this.wasHandled = true;
+
+            if(cell.canAttack && cell.piece){
+                cell.piece.death = true;
+                console.log("Kill")
+                cell.piece.update(scene, myTeam)
+            }
     
             if(myMove){
                 socket.emit('moveUnit', {
@@ -1691,11 +1692,11 @@ class Pawns extends Unit{
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
             nowCell.piece = null
-
+    
             if(cell.canAttack && cell.piece){
                 cell.piece.death = true;
                 console.log("Kill")
-                cell.piece.update(scene, myTeam)
+                updateGame()
             }
     
             //이동한 칸에 기물 정보 추가
