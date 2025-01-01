@@ -285,17 +285,21 @@ abstract class Unit{ // == piece ( 체스 기물 )
     public update(scene:THREE.Scene, myTeam:string){
         scene.remove(this.model)
         if(this.death){
-            myUnits = myUnits.filter((unit:Unit) => {
-                return unit.ID != this.ID
-            })
-            enemyUnits = enemyUnits.filter((unit:Unit) => {
-                return unit.ID != this.ID
-            })
-
+            if(this.team == myTeam){
+                myUnits = myUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+            }else{
+                enemyUnits = enemyUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+            }
             if(this.piece == "KING" && this.team == myTeam){
                 console.log("Kill King")
                 alert("you are lose")
                 //setGameOver
+            }else if(this.piece == "KING" && this.team != myTeam){
+                alert("you are win")
             }
         }else{        
             scene.add(this.model)
@@ -309,6 +313,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
         nowCell.piece = null
         console.log(target)
 
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
+            console.log("Kill")
+            cell.piece.update(scene, myTeam)
+        }
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
         cell.onUnitTeam = this.team;
@@ -339,11 +348,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
             clearInterval(animeId)
         }, 300)
         this.wasHandled = true;
-        if(cell.canAttack && cell.piece){
-            cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
-        }
         if(myMove){
             socket.emit('moveUnit', {
                 unitID: this.ID,
@@ -1491,6 +1495,11 @@ class Pawns extends Unit{
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
+            console.log("Kill")
+            cell.piece.update(scene, myTeam)
+        }
 
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
@@ -1551,11 +1560,6 @@ class Pawns extends Unit{
             }
         }, 300)
         this.wasHandled = true;
-        if(cell.canAttack && cell.piece){
-            cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
-        }
         if(myMove){
             socket.emit('moveUnit', {
                 unitID: this.ID,
@@ -1816,10 +1820,9 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 
         socket.on('getEnemy', ({unit}:{unit:string[]}) => {
             enemyUnits.forEach((unit:Unit) => {
-                unit.death = true;
                 scene.remove(unit.model)
             })
-            updateGame()
+            enemyUnits = []
             unit.forEach((unit_data:string) => {
                 const arr = unit_data.split("_")
                 switch(arr[1]){

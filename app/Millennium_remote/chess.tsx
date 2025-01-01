@@ -308,7 +308,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
         scene.remove(this.model)
         console.log(this.ID, this.death)
         if(this.death){
-            ////Temp
             if(this.team == myTeam){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
@@ -337,6 +336,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+        console.log(target)
 
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
@@ -1753,7 +1753,6 @@ class Pawns extends Unit{
                         socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                             return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
                         })})
-        
                     }
                 }
             }, 300)
@@ -1832,7 +1831,6 @@ class Space implements space {
 let myUnits:any = []
 let enemyUnits:any = [];
 let selUnit:unknown = null;
-let updateGame:() => void;
 let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
 function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
@@ -2012,15 +2010,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
             }
         }
         initGame()
-
-        updateGame = () => {
-            myUnits.forEach((unit:Unit) => {
-                unit.update(scene, myTeam)
-            })
-            enemyUnits.forEach((unit:Unit) => {
-                unit.update(scene, myTeam)
-            })
-        }
 
         clickHandler = (event: MouseEvent) => {
             const mouse = new THREE.Vector2();
