@@ -307,6 +307,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+        console.log(target)
 
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
@@ -1803,7 +1804,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 const layer = parseInt(arr[2]) as 1 | 2 | 3 | 4 | 5;
                 const row = parseInt(arr[0]) as 1 | 2 | 3 | 4 | 5;
                 const column = parseInt(arr[1]) as 1 | 2 | 3 | 4 | 5;
-                const team = unitID.split("_")[0] as "white" | "black"
                 if(unit.ID == unitID){
                     const targetCell = gameSpace.boards[layer-1].cells[row -1][column -1]
                     targetCell.canGo = true;

@@ -336,6 +336,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
             nowCell.onUnit = false;
             nowCell.onUnitTeam = "none"
             nowCell.piece = null
+            console.log(target)
     
             //이동한 칸에 기물 정보 추가
             cell.onUnit = true;
