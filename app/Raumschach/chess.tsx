@@ -1775,7 +1775,6 @@ let myUnits:any = []
 let enemyUnits:any = [];
 // const myTeam: "white" | "black" = 'white'
 let selUnit:unknown = null;
-let updateGame:() => void;
 let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
 function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
@@ -1973,15 +1972,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         }
 
         initGame()
-
-        updateGame = () => {
-            myUnits.forEach((unit:Unit) => {
-                unit.update(scene, myTeam)
-            })
-            enemyUnits.forEach((unit:Unit) => {
-                unit.update(scene, myTeam)
-            })
-        }
 
         clickHandler = (event: MouseEvent) => {
             const mouse = new THREE.Vector2();
