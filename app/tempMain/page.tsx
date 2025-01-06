@@ -43,7 +43,7 @@ function Match({mode, username}:{mode:string,username:string}) {
 
     const [team, setTeam] = useState<"white" | "black" | null>(null)
     //const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>(io('http://localhost:49152'))
-    const socket = useRef(io('http://chessback.apptcion.site'))
+    const socket = useRef(io('https://chessback.apptcion.site'))
     const [target, setTarget] = useState<string | null>(null)
     const [matched, setMatched] = useState(false)
     const canvasRef = useRef<HTMLCanvasElement>(null)
