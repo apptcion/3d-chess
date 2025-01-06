@@ -1752,7 +1752,6 @@ let myUnits:any = []
 let enemyUnits:any = [];
 // const myTeam: "white" | "black" = 'white'
 let selUnit:unknown = null;
-let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
 let visibleGlobal = true;
 function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.MutableRefObject<Space | null>, wallVisible:boolean, myTeam: "white" | "black"}) {
