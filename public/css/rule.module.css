@@ -1,0 +1,108 @@
+.main{
+    position: absolute;
+    top : 0;
+    left : 0;
+    display : flex;
+    width : 100vw;
+    padding : 5vw;
+    justify-content: center;
+}
+
+.content b{
+    font-weight: bolder;
+}
+
+.index{
+    position : absolute
+}
+
+.rules{
+    position: relative;
+    width: 85vw;
+}
+
+.title_lev1{
+    font-size : 2vw;
+    border-bottom : solid 1px black;
+}
+
+.title_lev2{
+    font-size : 1.2vw;
+    width : fit-content;
+    border-bottom : solid 1px black;
+}
+
+.title_lev3{
+    font-size : 0.9vw;
+}
+
+.img{
+    width: 10vw;
+    margin : 10px;
+}
+
+.icon{
+    width: 1vw;
+    position: relative;
+    top : 0.1vw;
+}
+
+.a{
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.button{
+    background-color: black;
+    color : white;
+}
+
+.content{
+    position: relative;
+    left : 2.55vw;
+}
+
+/* UI, SPACE 포함하는 최상위 div */
+.WRAP{
+    position: relative;
+    top : 0;
+    left : 0;
+    width: 100vw;
+    height: 100vh;
+    border : solid 1px black;
+}
+
+/* 게임 판과 기물이 구현되는 Canvas (React-three/fiber) */
+.SPACE{
+    position: absolute;
+    top : 0;
+    left : 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* 게임 UI가 구현되는 div */
+.UI{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.visible{
+    z-index : 2;
+    position: relative;
+    color : black;
+}
+
+.wall{
+    z-index : 2;
+    position: relative;
+    color : black;
+}
+
+
+
+

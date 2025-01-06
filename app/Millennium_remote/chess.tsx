@@ -1794,10 +1794,6 @@ class Space implements space {
         this.boards = Boards;
     }
 
-    public showWall(){
-
-   } 
-
     public addToScene(wallVisible:boolean) {
         this.boards.forEach(board => {
             board.cells.forEach(rows => {
@@ -1903,8 +1899,8 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                                 }
                             }
                             break;
-                        }
-                        // else if(cellData.visible){
+                        } 
+                        // else if(cellData.visible){        
                         //     cellData.setVisible(false)
                         //     break;
                         // }

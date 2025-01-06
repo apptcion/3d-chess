@@ -1,5 +1,5 @@
 'use client'
-import styles from '../../public/css/chess.module.css'
+import styles from '../../public/css/rule.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -7,9 +7,6 @@ import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
-import { Socket } from 'socket.io-client';
-import { DefaultEventsMap } from 'socket.io';
-import Chat from './chat';
 
 const colorConfig = {
     opacity : {
@@ -302,12 +299,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
         }
     }
 
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black"){
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
-        console.log(target)
 
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
@@ -344,12 +340,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
             clearInterval(animeId)
         }, 300)
         this.wasHandled = true;
-        if(myMove){
-            socket.emit('moveUnit', {
-                unitID: this.ID,
-                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
-            })
-        }
     }
 
     public convertCol(){
@@ -1485,7 +1475,7 @@ class Pawns extends Unit{
                 }
             }
     }
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black"){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -1525,7 +1515,7 @@ class Pawns extends Unit{
             this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 35 + 0.01)
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
-            if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
+            if(this.team == "white" && cell.row == 5 && cell.layer == 5){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
@@ -1533,13 +1523,9 @@ class Pawns extends Unit{
                 const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
                 newObj.addToScene(scene)
                 myUnits.push(newObj)
-                if(myMove){    
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-                }
+
             }
-            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
+            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
@@ -1547,21 +1533,9 @@ class Pawns extends Unit{
                 const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
                 newObj.addToScene(scene);
                 myUnits.push(newObj)
-                if(myMove){    
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-    
-                }
             }
         }, 300)
         this.wasHandled = true;
-        if(myMove){
-            socket.emit('moveUnit', {
-                unitID: this.ID,
-                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
-            })
-        }
     }
 
 }
@@ -1781,7 +1755,7 @@ let selUnit:unknown = null;
 let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
+function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.MutableRefObject<Space | null>, wallVisible:boolean, myTeam: "white" | "black"}) {
     const { scene, camera } = useThree();
 
     const changeNumToCol = (columnNum:number) => {
@@ -1804,108 +1778,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
         gameSpace.addToScene(wallVisible)
-
-        socket.on('moveUnit', ({unitID, moveData}:{unitID:string, moveData:string})=>{
-            enemyUnits.forEach((unit:Unit) => {
-                const arr= moveData.split("_")
-                const layer = parseInt(arr[2]) as 1 | 2 | 3 | 4 | 5;
-                const row = parseInt(arr[0]) as 1 | 2 | 3 | 4 | 5;
-                const column = parseInt(arr[1]) as 1 | 2 | 3 | 4 | 5;
-                if(unit.ID == unitID){
-                    const targetCell = gameSpace.boards[layer-1].cells[row -1][column -1]
-                    targetCell.canGo = true;
-                    targetCell.canAttack = true
-                    unit.move(targetCell, scene, myTeam, socket, false, target)
-                    turn = turn == "white" ? "black" : "white"
-                }
-            })
-        })
-
-        socket.on('getEnemy', ({unit}:{unit:string[]}) => {
-            enemyUnits.forEach((unit:Unit) => {
-                scene.remove(unit.model)
-            })
-            enemyUnits = []
-            unit.forEach((unit_data:string) => {
-                const arr = unit_data.split("_")
-                switch(arr[1]){
-                    case 'PAWNS':
-                        const obj = new Pawns(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                        obj.ID = `${arr[0]}_PAWNS_${arr[2]}`
-
-                        enemyUnits.push(obj)
-                        break;
-                    case 'UNICORNS':
-                        const obj1 = new Unicorns(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj1.ID = `${arr[0]}_UNICORNS_${arr[2]}`
-                        enemyUnits.push(obj1)
-                        break;
-                    case 'BISHOPS':
-                        const obj2 = new Bishops(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj2.ID = `${arr[0]}_BISHOPS_${arr[2]}`
-                        enemyUnits.push(obj2)
-                        break;
-                    case 'QUEEN':
-                        const obj3 = new Queen(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj3.ID = `${arr[0]}_QUEEN_${arr[2]}`
-                        enemyUnits.push(obj3)
-                        break;
-                    case 'ROOKS':
-                        const obj4 = new Rooks(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj4.ID = `${arr[0]}_ROOKS_${arr[2]}`
-                        enemyUnits.push(obj4)
-                        break;
-                    case 'KNIGHTS':
-                        const obj5 = new Knights(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj5.ID = `${arr[0]}_KNIGHTS_${arr[2]}`
-                        enemyUnits.push(obj5)
-                        break;
-                    case 'KING':
-                        const obj6 = new King(
-                            arr[0] as "white" | "black",
-                            parseInt(arr[3]) as 1 | 2 | 3 | 4 | 5,
-                            arr[4] as "a" | "b" | "c" | "d" | "e" ,
-                            parseInt(arr[5]) as 1 | 2 | 3 | 4 | 5,
-                            gameSpace.boards)
-                            obj6.ID = `${arr[0]}_KING_${arr[2]}`
-                        enemyUnits.push(obj6)
-                        break;
-                }
-            })
-            enemyUnits.forEach((unit: any) => {
-                unit.addToScene(scene)
-            })
-        })
 
         const initGame = () =>{
             if(myTeam == "white"){
@@ -1931,15 +1803,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                     unit.addToScene(scene)
                 })
 
-                const intervalID = setInterval(() => {
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-                    if(enemyUnits.length == 20){
-                        clearInterval(intervalID)
-                    }
-                },500)
-
             }else{
                 for(let i = 1; i <= 5; i++){
                     myUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
@@ -1963,15 +1826,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 myUnits.forEach((unit: any) => {
                     unit.addToScene(scene)
                 })
-
-                const intervalID = setInterval(() => {
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-                    if(enemyUnits.length == 20){
-                        clearInterval(intervalID)
-                    }
-                },500)
             }
         }
 
@@ -1990,7 +1844,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
             if (intersects.length > 0) {
                 if(event.button == 0) {//좌클릭
                     for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
+                        if(intersects[i].object.userData.type == 'units'){
                             if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                 selUnit.hideCanCell()
                                 selUnit.unitDown()
@@ -2010,12 +1864,11 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                             const cellData: Cell = intersects[i].object.userData.cell;
                             if(cellData.canGo){
                                 if(selUnit instanceof Unit){
-                                    selUnit.move(cellData, scene, myTeam, socket, true, target)
-                                    turn = turn == "white" ? "black" : "white"
+                                    selUnit.move(cellData, scene, myTeam)
                                 }
                                 selUnit = null;
                             }/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
+                            else if(cellData.onUnit && cellData.piece instanceof Unit){
                                 if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
                                     selUnit.hideCanCell()
                                     selUnit.unitDown()
@@ -2033,10 +1886,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                                 }
                                 break;
                             }
-                            // else if(cellData.visible){
-                            //     cellData.setVisible(false)
-                            //     break;
-                            // }
                         }
                     }
                 }else if(event.button == 2){
@@ -2052,34 +1901,33 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 }
             }
         };
-        //const disableContextMenu = (event: MouseEvent) => event.preventDefault();
         document.addEventListener("mousedown", clickHandler);
-        //document.addEventListener("contextmenu", disableContextMenu);
 
         camera.position.set(0,50,0);
         camera.lookAt(0, 0, 0);
 
         return () => {
             document.removeEventListener("click", clickHandler);
+            myUnits.forEach((unit:Unit) => {
+              scene.remove(unit.model)  
+            })
+            spaceRef.current?.removeAtScene(scene)
         };
-    }, [camera, scene, spaceRef, target]);
+    }, [camera, scene, spaceRef]);
 
     return null;
 }
 
 interface Props {
     team: "white" | "black",
-    socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-    target:string,
-    username:string
+    setClose: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function Chess({team, socket, target, username}: Props){
+export default function Chess({team, setClose}: Props){
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
-    //const [win, setWin] = useState<"white"|"black"|"none">("none");
 
     useEffect(() => {
 
@@ -2105,65 +1953,6 @@ export default function Chess({team, socket, target, username}: Props){
                 <directionalLight position={[400,-14,0]}  ></directionalLight>
                 <directionalLight position={[0,-14,-400]} ></directionalLight>
                 <directionalLight position={[0,-14,400]}  ></directionalLight>
-                {/* <mesh position={[0,200,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,400,0]} rotation-x={Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[0,-200,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,-400,0]} rotation-x={-Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[200,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[400,0,0]} rotation-y={-Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-
-                
-                <mesh position={[-200,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[-400,0,0]} rotation-y={Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,200]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,0,400]} rotation-y={Math.PI}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,-200]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,0,-400]}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh> */}
-    
-                {/** Code */}
                 <OrbitControls 
                     mouseButtons={{
                         LEFT: THREE.MOUSE.LEFT,
@@ -2171,7 +1960,7 @@ export default function Chess({team, socket, target, username}: Props){
                         RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
                     }}
                 />
-                <ThreeBoard spaceRef={spaceRef} /*turn={turn} setTurn={setTurn}*/ wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
+                <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
@@ -2192,11 +1981,9 @@ export default function Chess({team, socket, target, username}: Props){
                                 setWallVisible(e.target.checked)
                             }}
                         />
+                        
+                    <div onClick={() => setClose(false)}>close</div>
                     </div>
-                    <div id="showTurn" className={styles.myTeam}>myTeam : {team}</div>
-                    <Chat params={
-                        {socket, username}
-                    }></Chat>
             </div>
         </div>
     )

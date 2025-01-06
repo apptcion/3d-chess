@@ -119,7 +119,41 @@ export default function Login(){
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [error, SetError] = useState<string | null>(null)
+    
+    const loginHandler = () => {
+        const username = document.querySelector('#id') as HTMLInputElement;
+        const password = document.querySelector('#pw') as HTMLInputElement;
+        if(username.value && password.value){
+            fetch('https://chessback.apptcion.site/login/',{
+                method: "POST",
+                headers : {
+                    "Content-Type" : "application/json"
+                },
+                body : JSON.stringify({
+                    username : username.value,
+                    password : password.value
+                })
+            }).then((response) =>{
+                if(response.ok){
+                    return response.json()
+                }
+            }).then((data) => {
+                if(data.token != null){                
+                    localStorage.setItem('token', data.token);
+                    location.href = '/tempMain'
+                }else{
+                    //TODO Error
+                    SetError("Username or Password is invalid")
+                }
+            })
+        }
+    }
 
+    const keyDownHandler = (e:React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            loginHandler()
+        }
+    }
     useEffect(() => {
 
         let context = null;
@@ -168,35 +202,6 @@ export default function Login(){
         
 
         const button = document.querySelector('#sub_btn') as HTMLDivElement;
-
-        const loginHandler = () => {
-            const username = document.querySelector('#id') as HTMLInputElement;
-            const password = document.querySelector('#pw') as HTMLInputElement;
-            if(username.value && password.value){
-                fetch('https://chessback.apptcion.site/login/',{
-                    method: "POST",
-                    headers : {
-                        "Content-Type" : "application/json"
-                    },
-                    body : JSON.stringify({
-                        username : username.value,
-                        password : password.value
-                    })
-                }).then((response) =>{
-                    if(response.ok){
-                        return response.json()
-                    }
-                }).then((data) => {
-                    if(data.token != null){                
-                        localStorage.setItem('token', data.token);
-                        location.href = '/tempMain'
-                    }else{
-                        //TODO Error
-                        SetError("Username or Password is invalid")
-                    }
-                })
-            }
-        }
         button.addEventListener('click', loginHandler)
 
         resizeHandler()
@@ -214,8 +219,8 @@ export default function Login(){
             <div className={styles.loginForm}>
                 <img src='/img/logo.svg' className={styles.logo}/>
                 <div className={styles.input}>
-                    <div><input id="id" type="text" placeholder='username'/></div>
-                    <div><input id="pw" type="password" placeholder='password'/></div>
+                    <div><input id="id" type="text" placeholder='username' onKeyDown={keyDownHandler}/></div>
+                    <div><input id="pw" type="password" placeholder='password' onKeyDown={keyDownHandler}/></div>
                 </div>
                 <div className={styles.login_wrap}>
                     <div id="sub_btn" className={styles.login}>Login</div>

@@ -119,6 +119,40 @@ export default function Login(){
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [error, SetError] = useState<string | null>(null);
+    const loginHandler = () => {
+        const username = document.querySelector('#id') as HTMLInputElement;
+        const password = document.querySelector('#pw') as HTMLInputElement;
+
+        if(username.value && password.value){
+            fetch('https://chessback.apptcion.site/login/add',{
+                method: "POST",
+                headers : {
+                    "Content-Type" : "application/json"
+                },
+                body : JSON.stringify({
+                    username : username.value,
+                    password : password.value
+                })
+            }).then(response => {
+                if(response.ok){
+                    return response.json()
+                }
+            }).then(data => {
+                console.log(data)
+                if(!data.status){
+                    location.href="/login"
+                }else{
+                    SetError(data.cause)
+                    console.log(`${data.status}, cause ${data.cause}`)
+                }
+            })
+        }
+    }   
+    const keyDownHandler = (e:React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            loginHandler()
+        }
+    }
 
     useEffect(() => {
 
@@ -165,38 +199,9 @@ export default function Login(){
             cancelAnimationFrame(animeFrameID);
             Anime();
         };
-        
 
         const button = document.querySelector('#create') as HTMLDivElement
-        button.addEventListener('click', () => {
-            const username = document.querySelector('#id') as HTMLInputElement;
-            const password = document.querySelector('#pw') as HTMLInputElement;
-
-            if(username.value && password.value){
-                fetch('https://chessback.apptcion.site/login/add',{
-                    method: "POST",
-                    headers : {
-                        "Content-Type" : "application/json"
-                    },
-                    body : JSON.stringify({
-                        username : username.value,
-                        password : password.value
-                    })
-                }).then(response => {
-                    if(response.ok){
-                        return response.json()
-                    }
-                }).then(data => {
-                    console.log(data)
-                    if(!data.status){
-                        location.href="/login"
-                    }else{
-                        SetError(data.cause)
-                        console.log(`${data.status}, cause ${data.cause}`)
-                    }
-                })
-            }
-        })
+        button.addEventListener('click',loginHandler)
 
         resizeHandler()
         window.addEventListener('resize', resizeHandler)
@@ -212,8 +217,8 @@ export default function Login(){
             <div className={styles.loginForm}>
                 <img src='/img/logo.svg' className={styles.logo}/>
                 <div className={styles.input}>
-                    <div><input id="id" type="text" placeholder='username'/></div>
-                    <div><input id="pw" type="password" placeholder='password'/></div>
+                    <div><input id="id" type="text" placeholder='username' onKeyDown={keyDownHandler}/></div>
+                    <div><input id="pw" type="password" placeholder='password' onKeyDown={keyDownHandler}/></div>
                 </div>
                 <div className={styles.login_wrap}>
                     <div id="create" className={styles.create}>Create Account</div>
