@@ -9,6 +9,7 @@ import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io';
+import Chat from './chat';
 
 const colorConfig = {
     opacity : {
@@ -269,13 +270,8 @@ abstract class Unit{ // == piece ( 체스 기물 )
             cell.canGo = false;
             cell.canAttack = false;
             cell.normalOpacity = colorConfig.opacity.normal;
-            tempMaterial.opacity = colorConfig.opacity.normal;
+            tempMaterial.opacity = visibleGlobal ? colorConfig.opacity.normal : 0.2;
             tempMaterial.color.set(`${cell.color}`)
-
-            // const cube_tempMaterial = cell.cubeMesh.material as Array<THREE.MeshBasicMaterial>;
-            // for(let i = 0; i < 6; i++){
-            //     cube_tempMaterial[i].color.set(`${cell.color}`)
-            // }
             const cube_material = cell.cubeMesh.material as THREE.MeshBasicMaterial
             cube_material.color.set(`${cell.color}`)
         })
@@ -1777,6 +1773,7 @@ let enemyUnits:any = [];
 let selUnit:unknown = null;
 let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
+let visibleGlobal = true;
 function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
     const { scene, camera } = useThree();
 
@@ -2058,7 +2055,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, [camera, scene, spaceRef, wallVisible, target]);
+    }, [camera, scene, spaceRef, target]);
 
     return null;
 }
@@ -2066,10 +2063,11 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
 interface Props {
     team: "white" | "black",
     socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-    target:string
+    target:string,
+    username:string
 }
 
-export default function Chess({team, socket, target}: Props){
+export default function Chess({team, socket, target, username}: Props){
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
@@ -2082,6 +2080,7 @@ export default function Chess({team, socket, target}: Props){
             spaceRef.current.setAllVisible(visible)
             spaceRef.current.addToScene(wallVisible)
         }
+        visibleGlobal = visible
 
     },[visible, wallVisible])
 
@@ -2169,16 +2168,28 @@ export default function Chess({team, socket, target}: Props){
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                    <input
-                        type="checkbox"
-                        checked={visible}
-                        onChange={(e) => setVisible(e.target.checked)}
-                    /><br />
-                    <div>show Wall <input type="checkbox"
-                        checked={wallVisible}
-                        onChange={(e) => setWallVisible(e.target.checked)}
-                     /> </div>
-                    {/*<div id="showTurn">{win}</div>*/}
+                    <div className={styles.visible}>
+                        setVisible
+                        <input 
+                            type="checkbox"
+                            checked={visible}
+                            onChange={(e) => setVisible(e.target.checked)}
+                        />
+                    </div>
+                    <div className={styles.wall}>
+                        show Wall
+                        <input
+                            type="checkbox"
+                            checked={wallVisible}
+                            onChange={(e) => {
+                                setWallVisible(e.target.checked)
+                            }}
+                        />
+                    </div>
+                    <div id="showTurn" className={styles.myTeam}>myTeam : {team}</div>
+                    <Chat params={
+                        {socket, username}
+                    }></Chat>
             </div>
         </div>
     )

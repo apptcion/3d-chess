@@ -1,0 +1,50 @@
+.wrap{
+    position: absolute;
+    bottom : 0px;
+    z-index : 2;
+    padding-top : 10px;
+}
+
+.wrap:has(.input:focus){
+    
+    background-color: rgba(0,0,0,0.5);
+}
+
+.log{
+    margin-left : 0.5vw;
+}
+
+.chat{
+    display: flex;
+    margin-bottom : 7px;
+}
+
+.username{
+    background-color: rgb(186, 186, 186);
+    color : black;
+    padding : 4px;
+    border-radius: 5px;
+    display : flex;
+    align-items: center;
+    
+}
+.content{
+    padding : 4px;
+    max-width: 10vw;
+    overflow-wrap: break-word;
+}
+
+.input{
+    background-color: transparent;
+    color : white;
+    font-size : 1vw;
+    margin : 0.5vw;
+    width: 12vw;
+    height : 3vh;
+}
+
+.input:focus{
+    background-color: black;
+    outline: none;
+    box-shadow: 0px 0px 1px 1px white;
+}

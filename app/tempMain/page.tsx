@@ -3,10 +3,9 @@ import styles from '../../public/css/selMode.module.css'
 import matchStyle from '../../public/css/match.module.css'
 
 import { useEffect, useRef, useState } from "react"
-import { io, Socket } from 'socket.io-client'
+import { io } from 'socket.io-client'
 import Chess_Raumschach from '../Raumschach/page'
 import Chess_Millennium from '../Millennium_remote/page'
-import { DefaultEventsMap } from "socket.io"
 
 
 class Dot{
@@ -40,10 +39,11 @@ class Dot{
   }
 }
 
-function Match({mode}:{mode:string}) {
+function Match({mode, username}:{mode:string,username:string}) {
 
     const [team, setTeam] = useState<"white" | "black" | null>(null)
-    const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>(io('https://chessback.apptcion.site'))
+    //const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>(io('http://localhost:49152'))
+    const socket = useRef(io('http://chessback.apptcion.site'))
     const [target, setTarget] = useState<string | null>(null)
     const [matched, setMatched] = useState(false)
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -82,12 +82,12 @@ function Match({mode}:{mode:string}) {
       }
 
       render()
-      if(socket){
-        socket.emit('join', {mode});
+      if(socket.current){
+        socket.current.emit('join', {mode});
     
-        socket.on('matched', ({target, team}) => {
+        socket.current.on('matched', ({target, team}) => {
           setTeam(team)
-          setSocket(socket)
+//          setSocket(socket)
           setTarget(target)
           setMatched(true)
       
@@ -98,7 +98,7 @@ function Match({mode}:{mode:string}) {
         window.removeEventListener('resize', initCanvas)
         cancelAnimationFrame(animationFrameId);
       }
-    }, [team,socket,matched, target]);  // 빈 배열을 넣어 한 번만 실행되게 설정
+    }, [team,socket,matched, target]);
 
   return (
     <div className={matchStyle.wrap}>
@@ -110,11 +110,11 @@ function Match({mode}:{mode:string}) {
             <div className={matchStyle.mode}>{mode} mode </div>
           </div>
         </div> }
-      {matched && team && socket && target && mode=="Raumschach" && <Chess_Raumschach params={
-        {team,socket,target}
+      {matched && team && socket.current && target && mode=="Raumschach" && <Chess_Raumschach params={
+        {team,socket: socket.current,target, username}
       } />}
       {matched && team && socket && target && mode=="Millennium" && <Chess_Millennium params={
-        {team,socket,target}
+        {team,socket: socket.current,target, username}
       } />}
     </div>
   )
@@ -176,7 +176,7 @@ export default function Main() {
 
   return (
     <main className={styles.main}>
-      {gameStart && mode.current && <Match mode={mode.current}/>}
+      {gameStart && mode.current && username && <Match mode={mode.current} username={username}/>}
       {!gameStart && 
         <div>
           <div className={styles.title}>

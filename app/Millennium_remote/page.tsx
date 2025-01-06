@@ -6,15 +6,17 @@ const Chess = dynamic(() => import('./chess'),{ssr:false})
 type Props = {
     team: "white" | "black",
     socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-    target : string
+    target : string,
+    username: string
 }
 export default function Chesspage({ params }: { params: Props }) {
-    const { team, socket, target } = params;
+    const { team, socket, target, username } = params;
     return <Chess params={
         {
             team,
             socket,
-            target
+            target,
+            username
         }
     } />;
   }

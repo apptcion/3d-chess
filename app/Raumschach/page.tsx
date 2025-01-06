@@ -6,9 +6,10 @@ const Chess = dynamic(() => import('./chess'),{ssr:false})
 interface Props {
     team: "white" | "black",
     socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-    target : string
+    target : string,
+    username:string
 }
 export default function Chesspage({ params }: { params: Props }) {
-    const { team, socket, target } = params;
-    return <Chess team={team} socket={socket} target={target} />;
+    const { team, socket, target, username } = params;
+    return <Chess team={team} socket={socket} target={target} username={username}/>;
   }
