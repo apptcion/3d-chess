@@ -1750,7 +1750,6 @@ class Space implements space {
 
 let myUnits:any = []
 let enemyUnits:any = [];
-// const myTeam: "white" | "black" = 'white'
 let selUnit:unknown = null;
 let clickHandler:(event:MouseEvent) => void;
 let visibleGlobal = true;
@@ -1771,7 +1770,6 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.Mutable
                 return "e"
         }
     }
-    
 
     useEffect(() => {
         const gameSpace = new Space(scene);
@@ -1779,53 +1777,37 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.Mutable
         gameSpace.addToScene(wallVisible)
 
         const initGame = () =>{
-            if(myTeam == "white"){
-                for(let i = 1; i <= 5; i++){
-                    myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
-                }
-                for(let i = 1; i <= 5; i++){
-                    myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
-                }
-                myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
-                myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
-                myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
-                myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
-                myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
-                                          
-                myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
-                myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
-                myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
-                myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
-                myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
-    
-                myUnits.forEach((unit: any) => {
-                    unit.addToScene(scene)
-                })
-
-            }else{
-                for(let i = 1; i <= 5; i++){
-                    myUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
-                }
-                for(let i = 1; i <= 5; i++){
-                    myUnits.push(new Pawns("black", 4, changeNumToCol(i), 4, gameSpace.boards))
-                }
-
-                myUnits.push(new Unicorns( "black", 5, "a", 4, gameSpace.boards))
-                myUnits.push(new Bishops(  "black", 5, "b", 4, gameSpace.boards))
-                myUnits.push(new Queen(    "black", 5, "c", 4, gameSpace.boards))
-                myUnits.push(new Unicorns( "black", 5, "d", 4, gameSpace.boards))
-                myUnits.push(new Bishops(  "black", 5, "e", 4, gameSpace.boards))
-    
-                myUnits.push(new Rooks(    "black", 5, "a", 5, gameSpace.boards))
-                myUnits.push(new Knights(  "black", 5, "b", 5, gameSpace.boards))
-                myUnits.push(new King(     "black", 5, "c", 5, gameSpace.boards))
-                myUnits.push(new Knights(  "black", 5, "d", 5, gameSpace.boards))
-                myUnits.push(new Rooks(    "black", 5, "e", 5, gameSpace.boards))    
-
-                myUnits.forEach((unit: any) => {
-                    unit.addToScene(scene)
-                })
+            for(let i = 1; i <= 5; i++){
+                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
             }
+            for(let i = 1; i <= 5; i++){
+                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
+            }
+            myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
+            myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
+            myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
+            myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
+            myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
+                                      
+            myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
+            myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
+            myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
+            myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
+            myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
+            myUnits.forEach((unit: Unit) => {
+                unit.addToScene(scene)
+            })
+
+            for(let i = 1; i <= 5; i++){
+                enemyUnits.push(new Pawns("black", 4, changeNumToCol(i), 4, gameSpace.boards))
+            }
+            for(let i = 1; i <= 5; i++){
+                enemyUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
+            }
+
+            enemyUnits.forEach((unit:Unit) => {
+                unit.addToScene(scene)
+            })
         }
 
         initGame()
@@ -1956,33 +1938,33 @@ export default function Chess({team, setClose}: Props){
                     mouseButtons={{
                         LEFT: THREE.MOUSE.LEFT,
                         MIDDLE: THREE.MOUSE.MIDDLE,
-                        RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
+                        RIGHT: THREE.MOUSE.RIGHT,
                     }}
                 />
                 <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                    <div className={styles.visible}>
-                        setVisible
-                        <input 
-                            type="checkbox"
-                            checked={visible}
-                            onChange={(e) => setVisible(e.target.checked)}
-                        />
-                    </div>
-                    <div className={styles.wall}>
-                        show Wall
-                        <input
-                            type="checkbox"
-                            checked={wallVisible}
-                            onChange={(e) => {
-                                setWallVisible(e.target.checked)
-                            }}
-                        />
-                        
-                    <div onClick={() => setClose(false)}>close</div>
-                    </div>
+                <div className={styles.visible}>
+                    setVisible &nbsp;
+                    <input 
+                        type="checkbox"
+                        checked={visible}
+                        onChange={(e) => setVisible(e.target.checked)}
+                    />
+                </div>
+                <div className={styles.wall}>
+                    show Wall &nbsp;
+                    <input
+                        type="checkbox"
+                        checked={wallVisible}
+                        onChange={(e) => {
+                            setWallVisible(e.target.checked)
+                        }}
+                    />
+                </div>
+                
+                <div onClick={() => setClose(false)} className={styles.close}>&times;</div>
             </div>
         </div>
     )

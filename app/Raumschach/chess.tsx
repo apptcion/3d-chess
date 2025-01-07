@@ -1927,7 +1927,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
                 myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
     
-                myUnits.forEach((unit: any) => {
+                myUnits.forEach((unit: Unit) => {
                     unit.addToScene(scene)
                 })
 
@@ -1960,7 +1960,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 myUnits.push(new Knights(  "black", 5, "d", 5, gameSpace.boards))
                 myUnits.push(new Rooks(    "black", 5, "e", 5, gameSpace.boards))    
 
-                myUnits.forEach((unit: any) => {
+                myUnits.forEach((unit: Unit) => {
                     unit.addToScene(scene)
                 })
 
@@ -2193,7 +2193,7 @@ export default function Chess({team, socket, target, username}: Props){
                             }}
                         />
                     </div>
-                    <div id="showTurn" className={styles.myTeam}>myTeam : {team}</div>
+                    <div className={styles.myTeam}>myTeam : {team}</div>
                     <Chat params={
                         {socket, username}
                     }></Chat>

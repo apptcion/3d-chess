@@ -10,10 +10,7 @@
 
 .content b{
     font-weight: bolder;
-}
-
-.index{
-    position : absolute
+    font-size : 1.1em
 }
 
 .rules{
@@ -50,16 +47,40 @@
 .a{
     text-decoration: underline;
     font-weight: bold;
+    font-size : 1.1em;
+    color : rgb(157, 124, 183)
 }
 
 .button{
     background-color: black;
     color : white;
+    padding : 10px;
+    width: 7vw;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 0.5vw;
+    margin-top : 10px;
+    font-size : 0.9vw;
+    transition: 0.1s;
+}
+.button:hover{
+    padding : 12px;
+    width: calc(7vw + 12px);
+    transform-origin: center;
 }
 
 .content{
     position: relative;
     left : 2.55vw;
+    margin-bottom: 10px;
+}
+
+.canvasWrap{
+    overflow : hidden;
+    position: fixed;
+    top : 0;
+    background-color: black;
 }
 
 /* UI, SPACE 포함하는 최상위 div */
@@ -94,13 +115,29 @@
 .visible{
     z-index : 2;
     position: relative;
-    color : black;
+    color : white;
 }
 
 .wall{
     z-index : 2;
     position: relative;
-    color : black;
+    color : white;
+}
+
+.close{
+    cursor: pointer;
+    position: absolute;
+    color : white;
+    z-index : 2;
+    font-size : 3vw;
+    top : 3vw;
+    right : calc(3vw + 20px);
+    transition: 0.2s;
+}
+
+.close:hover{
+    font-size : 3.2vw;
+    color : #ff5555
 }
 
 
