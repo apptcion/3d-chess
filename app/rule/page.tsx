@@ -68,7 +68,7 @@ export default function Rule() {
             <div>
               <h2 className={`${styles.title_lev2}`}>게임 종료</h2>
               <div className={styles.content}>
-                자신의 기물을 움직여 적의{" "}<b><a href="#UNIT_KING" className={`${styles.a}`}>왕</a>을 잡으면 승리합니다.</b>
+                자신의 기물을 움직여 적의{" "}<b><a href="#UNIT_KING" className={`${styles.a}`}>왕</a>을 잡으면 승리합니다.</b><br />
                 왕을 움직이거나 다른 기물로 적의 경로를 막는 등의 행위를 하지 않으면 다음 차례에 왕이 잡히는 상황을 <b>체크</b>라고 합니다  
               </div>
             </div>

@@ -168,7 +168,7 @@ export default function Main() {
       if(mode.current != null){
         setGameStart(true)
       }else{
-        alert("select Mode")
+        alert("select Mode (Millennium or Raumschach) ")
       }
     })
 
@@ -187,7 +187,7 @@ export default function Main() {
             <div id="Raumschach" className={`${styles.Raumschach} ${styles.mode}`}>Raumschach</div>
           </div>
           <button id="startGame" className={styles.start}>Start Game</button>
-          <a href="/rule" className={styles.howToPlay}>How to play</a>
+          <a target="_blank" href="/rule" className={styles.howToPlay}>How to play</a>
         </div>
       }
     </main>
