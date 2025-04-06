@@ -142,7 +142,7 @@ export default function Login(){
                 console.log(data)
                 if(data.token != null){                
                     localStorage.setItem('token', data.token);
-                    location.href = '/tempMain'
+                    location.href = '/'
                 }else{
                     //TODO Error
                     SetError("Username or Password is invalid")
