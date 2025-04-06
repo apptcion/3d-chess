@@ -126,8 +126,8 @@ export default function Main() {
   const [gameStart, setGameStart] = useState(false)
 
   useEffect(() => {
-    console.log(username)
     const token = localStorage.getItem('token')
+    console.log(token)
     if (token) {
       fetch('https://chessback.apptcion.site/login/getPayload', {
         method: 'POST',
@@ -140,6 +140,7 @@ export default function Main() {
           return response.json()
         }
       }).then(data => {
+        console.log(data)
         if (data.data != null) {
           setUsername(data.data.username)
         } else {

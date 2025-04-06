@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from "react";
 import {getCookie, setCookie} from '../public/js/cookie'
-import Main from './tempMain/page'
+import Main from './main/page'
 
 export default function Home() {
 

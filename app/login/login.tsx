@@ -123,6 +123,7 @@ export default function Login(){
     const loginHandler = () => {
         const username = document.querySelector('#id') as HTMLInputElement;
         const password = document.querySelector('#pw') as HTMLInputElement;
+        console.log(username.value, password.value)
         if(username.value && password.value){
             fetch('https://chessback.apptcion.site/login/',{
                 method: "POST",
@@ -138,6 +139,7 @@ export default function Login(){
                     return response.json()
                 }
             }).then((data) => {
+                console.log(data)
                 if(data.token != null){                
                     localStorage.setItem('token', data.token);
                     location.href = '/tempMain'
