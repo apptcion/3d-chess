@@ -293,9 +293,11 @@ abstract class Unit{ // == piece ( 체스 기물 )
             if(this.piece == "KING" && this.team == myTeam){
                 console.log("Kill King")
                 alert("you are lose")
+                location.href ="/"
                 //setGameOver
             }else if(this.piece == "KING" && this.team != myTeam){
                 alert("you are win")
+                location.href ="/"
             }
         }else{        
             scene.add(this.model)
