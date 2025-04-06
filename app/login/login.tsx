@@ -231,7 +231,7 @@ export default function Login(){
                     }}>Sign up</div>
                 </div>
             </div>
-            {error && <ErrorPage params={{cause : error}}/>}
+            {error && <ErrorPage params={{cause : error, closeActionFunc : SetError}}/>}
         </main>
     )
 }
