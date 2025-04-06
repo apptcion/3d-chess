@@ -1,6 +1,4 @@
 'use client'
-import Image from "next/image";
-import styles from "./page.module.css";
 import { useEffect } from "react";
 import {getCookie, setCookie} from '../public/js/cookie'
 import Main from './tempMain/page'
