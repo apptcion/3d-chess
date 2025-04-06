@@ -339,7 +339,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         setTimeout(() => {
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
+            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 34.5 + 0.01)
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
         }, 300)
