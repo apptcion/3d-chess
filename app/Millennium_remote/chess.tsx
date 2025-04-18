@@ -1716,7 +1716,7 @@ class Pawns extends Unit{
     
             setTimeout(() => {
                 this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 20.5)
-                this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
+                this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 34.5)
                 this.model.position.setZ(this.row * -mapConfig.cellSize.y + 16.5)
                 clearInterval(animeId)
                 if(this.team == "white" && cell.row == 8 && cell.layer == 3 && myMove){
@@ -2121,9 +2121,6 @@ export default function Chesspage({ params }: { params: Props }) {
                     state.gl.setClearColor('#87CEEB'); // 하늘색 배경 설정
             }} >
                 
-                {/** dev */}
-                <axesHelper></axesHelper>
-
                 {/** temp */}
                 <directionalLight position={[0,100,0]}></directionalLight>
                 <directionalLight position={[0,-100,0]}></directionalLight>
@@ -2131,39 +2128,6 @@ export default function Chesspage({ params }: { params: Props }) {
                 <directionalLight position={[100,-14,0]}></directionalLight>
                 <directionalLight position={[0,-14,-100]}></directionalLight>
                 <directionalLight position={[0,-14,100]}></directionalLight>
-                <mesh position={[0,100,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[0,-100,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[100,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-
-                
-                <mesh position={[-100,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,100]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,-100]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
 {/* 
                 <mesh>
                     <sphereGeometry args={[100]}></sphereGeometry>

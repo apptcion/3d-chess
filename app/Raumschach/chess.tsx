@@ -334,16 +334,45 @@ abstract class Unit{ // == piece ( 체스 기물 )
         this.column = cell.column;
         
         const animeId = setInterval(() => {
-            this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-            this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-            this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
+            this.model.position.setX(this.model.position.x - (onceX * mapConfig.cellSize.x))
+            this.model.position.setY(this.model.position.y - (onceY * mapConfig.cellSize.Gap))
+            this.model.position.setZ(this.model.position.z + (onceZ * mapConfig.cellSize.y))
         }, 10)
 
         setTimeout(() => {
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5) // 원래 공식에 살짝 조정
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
+            if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
+                myUnits = myUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+                scene.remove(this.model)
+                const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
+                newObj.addToScene(scene)
+                myUnits.push(newObj)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                }
+            }
+            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
+                myUnits = myUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+                scene.remove(this.model)
+                const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
+                newObj.addToScene(scene);
+                myUnits.push(newObj)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+    
+                }
+            }
         }, 300)
         this.wasHandled = true;
         if(myMove){
@@ -1524,7 +1553,7 @@ class Pawns extends Unit{
 
         setTimeout(() => {
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 35 + 0.01)
+            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5) // 원래 공식에 살짝 조정
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
             if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
