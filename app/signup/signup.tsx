@@ -1,6 +1,6 @@
 'use client'
 import styles from '../../public/css/signup.module.css'
-import ErrorPage from './error'
+import ErrorPage from '../common/error'
 
 import {useEffect, useRef, useState} from 'react'
 
@@ -224,7 +224,7 @@ export default function Login(){
                     <div id="create" className={styles.create}>Create Account</div>
                 </div>
             </div>
-            {error && <ErrorPage params={{cause:error}} />}
+            {error && <ErrorPage params={{cause:error, closeActionFunc: SetError}} />}
         </main>
     )
 }

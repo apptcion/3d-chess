@@ -1,0 +1,234 @@
+.main{
+    position : absolute;
+    top : 0;
+    left : 0;
+    width : 100vw;
+    height : 100vh;
+    background-color: black;
+}
+
+@font-face {
+  font-family: 'Sterion';
+  src: url('/fonts/sterion-font/Sterion-BLLld.ttf') format('truetype');
+}
+
+.title {
+    color: white;
+    font-size : 5vw;
+    font-family: 'Sterion', sans-serif;
+    font-weight: bolder;
+    margin-top : 25vh;
+    display : flex;
+    justify-content: center;
+}
+
+.selMode {
+    margin-top : 10vh;
+    display : flex;
+    justify-content: space-around;
+    width : 45vw;
+    position : relative;
+    left : 27.5vw;
+}
+
+.selected{
+    border : solid 2px white !important;
+}
+
+.selected::before,
+.selected::after {
+  display: none !important;
+}
+
+.mode{
+    border : solid 2px black;
+    color : white;
+    width : 20vw;
+    height : 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor : pointer;
+    transition: 0.3s;
+    font-size : 3vw;
+    font-family: 'Pretendard', sans-serif;
+    position: relative;
+    left : 0.5vw;
+}
+
+.mode:hover {
+  border: solid 2px white;
+}
+
+.mode:hover::before,
+.mode:hover::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.mode:hover::before {
+  left: 4px;
+  text-shadow: -3px 0 #ff0000;
+  animation: noise-anim 0.4s infinite linear alternate-reverse;
+  z-index: 1;
+}
+
+.mode:hover::after {
+  left: -4px;
+  text-shadow: 3px 0 #00ff00;
+  animation: noise-anim-2 0.3s infinite linear alternate-reverse;
+  z-index: 1;
+}
+
+@keyframes noise-anim {
+  0% { clip-path: inset(0 0 0 0); }
+  5% { clip-path: inset(40px 0 40px 0); }
+  10% { clip-path: inset(80px 0 80px 0); }
+  15% { clip-path: inset(120px 0 120px 0); }
+  20% { clip-path: inset(160px 0 160px 0); }
+  25% { clip-path: inset(200px 0 200px 0); }
+  30% { clip-path: inset(240px 0 240px 0); }
+  35% { clip-path: inset(280px 0 280px 0); }
+  40% { clip-path: inset(320px 0 320px 0); }
+  45% { clip-path: inset(360px 0 360px 0); }
+  50% { clip-path: inset(400px 0 400px 0); }
+  55% { clip-path: inset(440px 0 440px 0); }
+  60% { clip-path: inset(480px 0 480px 0); }
+  65% { clip-path: inset(520px 0 520px 0); }
+  70% { clip-path: inset(560px 0 560px 0); }
+  75% { clip-path: inset(600px 0 600px 0); }
+  80% { clip-path: inset(640px 0 640px 0); }
+  85% { clip-path: inset(680px 0 680px 0); }
+  90% { clip-path: inset(720px 0 720px 0); }
+  95% { clip-path: inset(760px 0 760px 0); }
+  100% { clip-path: inset(800px 0 800px 0); }
+}
+
+@keyframes noise-anim-2 {
+  0% { clip-path: inset(20px 0 20px 0); }
+  5% { clip-path: inset(60px 0 60px 0); }
+  10% { clip-path: inset(100px 0 100px 0); }
+  15% { clip-path: inset(140px 0 140px 0); }
+  20% { clip-path: inset(180px 0 180px 0); }
+  25% { clip-path: inset(220px 0 220px 0); }
+  30% { clip-path: inset(260px 0 260px 0); }
+  35% { clip-path: inset(300px 0 300px 0); }
+  40% { clip-path: inset(340px 0 340px 0); }
+  45% { clip-path: inset(380px 0 380px 0); }
+  50% { clip-path: inset(420px 0 420px 0); }
+  55% { clip-path: inset(460px 0 460px 0); }
+  60% { clip-path: inset(500px 0 500px 0); }
+  65% { clip-path: inset(540px 0 540px 0); }
+  70% { clip-path: inset(580px 0 580px 0); }
+  75% { clip-path: inset(620px 0 620px 0); }
+  80% { clip-path: inset(660px 0 660px 0); }
+  85% { clip-path: inset(700px 0 700px 0); }
+  90% { clip-path: inset(740px 0 740px 0); }
+  95% { clip-path: inset(780px 0 780px 0); }
+  100% { clip-path: inset(820px 0 820px 0); }
+}
+
+.start {
+  width : 10vw;
+  /* in scss with just one variable i can change opacity with rgba(variable, opacity) but in css it's not possible so i have used three seperate variables */
+  /* with hue-rotate color can be changed */
+  --main-color: rgb(46, 213, 115);
+  --main-bg-color: rgba(46, 213, 116, 0.36);
+  --pattern-color: rgba(46, 213, 116, 0.073);
+
+  /* change this rotation value */
+  filter: hue-rotate(0deg);
+
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  background: radial-gradient(
+      circle,
+      var(--main-bg-color) 0%,
+      rgba(0, 0, 0, 0) 95%
+    ),
+    linear-gradient(var(--pattern-color) 1px, transparent 1px),
+    linear-gradient(to right, var(--pattern-color) 1px, transparent 1px);
+  background-size:
+    cover,
+    15px 15px,
+    15px 15px;
+  background-position:
+    center center,
+    center center,
+    center center;
+  border-image: radial-gradient(
+      circle,
+      var(--main-color) 0%,
+      rgba(0, 0, 0, 0) 100%
+    )
+    1;
+  border-width: 1px 0 1px 0;
+  color: var(--main-color);
+  padding: 1rem 3rem;
+  font-weight: 700;
+  font-size: 1.5rem;
+  transition: background-size 0.2s ease-in-out;
+
+  margin-top : 5vh;
+  position: relative;
+  left : 45vw;
+  font-size: 1.2vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.start:hover {
+  background-size:
+    cover,
+    10px 10px,
+    10px 10px;
+}
+.start:active {
+  filter: hue-rotate(250deg);
+}
+
+.howToPlay{
+  margin-top : 1vh;
+  position: relative;
+  color : gray;
+  font-weight: bold;
+  font-size : 0.7vw;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  left : 47.5vw;
+  width : 5vw;
+}
+
+.howToPlay:hover{
+  text-decoration: underline;
+}
+  
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'STAR_FONT';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-5@1.0/HakgyoansimByeolbichhaneulTTF-B.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+.glitch{
+  position: relative;
+}

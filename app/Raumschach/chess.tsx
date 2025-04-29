@@ -9,7 +9,7 @@ import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io';
-import Chat from './chat';
+import Chat from '../common/chat';
 
 const colorConfig = {
     opacity : {
@@ -1970,6 +1970,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
+                camera.position.set(0,10,40)
 
             }else{
                 for(let i = 1; i <= 5; i++){
@@ -2003,6 +2004,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
+                camera.position.set(0,20,-40)
             }
         }
 
@@ -2087,9 +2089,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         document.addEventListener("mousedown", clickHandler);
         //document.addEventListener("contextmenu", disableContextMenu);
 
-        camera.position.set(0,50,0);
-        camera.lookAt(0, 0, 0);
-
         return () => {
             document.removeEventListener("click", clickHandler);
         };
@@ -2136,63 +2135,6 @@ export default function Chess({team, socket, target, username}: Props){
                 <directionalLight position={[400,-14,0]}  ></directionalLight>
                 <directionalLight position={[0,-14,-400]} ></directionalLight>
                 <directionalLight position={[0,-14,400]}  ></directionalLight>
-                {/* <mesh position={[0,200,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,400,0]} rotation-x={Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[0,-200,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,-400,0]} rotation-x={-Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[200,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[400,0,0]} rotation-y={-Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-
-                
-                <mesh position={[-200,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[-400,0,0]} rotation-y={Math.PI * 0.5}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,200]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,0,400]} rotation-y={Math.PI}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,-200]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                <mesh position={[0,0,-400]}>
-                    <planeGeometry args={[800,800]}></planeGeometry>
-                    <meshBasicMaterial map={new THREE.TextureLoader().load( 'img/space.jpg')}></meshBasicMaterial>
-                </mesh> */}
     
                 {/** Code */}
                 <OrbitControls 

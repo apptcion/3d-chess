@@ -9,7 +9,7 @@ import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { DefaultEventsMap } from 'socket.io';
 import { Socket } from 'socket.io-client';
-import Chat from './chat';
+import Chat from '../common/chat';
 
 const colorConfig = {
     opacity : {
@@ -1822,7 +1822,7 @@ let enemyUnits:any = [];
 let selUnit:unknown = null;
 let turn: "white" | "black" = "white"
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
+function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>, wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
     const { scene, camera } = useThree();
     const changeNumToCol = (columnNum:number) => {
         switch(columnNum){
@@ -2047,7 +2047,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
-
+                camera.position.set(0,0,60)
             }else{
                 for(let i = 1; i <= 8; i++){
                     myUnits.push(new Pawns("black", 7, changeNumToCol(i), 3, gameSpace.boards))
@@ -2073,14 +2073,12 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
+                camera.position.set(0,5,-60)
             }
         }
         initGame()
 
         document.addEventListener("mousedown", clickHandler);
-
-        camera.position.set(0,50,0);
-        camera.lookAt(0, 0, 0);
 
         return () => {
             document.removeEventListener("click", clickHandler);
@@ -2128,11 +2126,7 @@ export default function Chesspage({ params }: { params: Props }) {
                 <directionalLight position={[100,-14,0]}></directionalLight>
                 <directionalLight position={[0,-14,-100]}></directionalLight>
                 <directionalLight position={[0,-14,100]}></directionalLight>
-{/* 
-                <mesh>
-                    <sphereGeometry args={[100]}></sphereGeometry>
-                    <meshBasicMaterial color={'black'} side={THREE.BackSide}></meshBasicMaterial>
-                </mesh> */}
+
     
                 {/** Code */}
                 <OrbitControls 

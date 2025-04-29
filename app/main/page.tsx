@@ -1,11 +1,12 @@
 'use client'
-import styles from '../../public/css/selMode.module.css'
+import styles from '../../public/css/main.module.css'
 import matchStyle from '../../public/css/match.module.css'
 
 import { useEffect, useRef, useState } from "react"
 import { io } from 'socket.io-client'
 import Chess_Raumschach from '../Raumschach/page'
 import Chess_Millennium from '../Millennium_remote/page'
+import ErrorPage from '../common/error'
 
 
 class Dot{
@@ -124,6 +125,13 @@ export default function Main() {
   const [username, setUsername] = useState(null)
   const mode = useRef<string | null>(null)
   const [gameStart, setGameStart] = useState(false)
+  const [error, SetError] = useState<string | null>(null)
+
+  const removeALLEventListener = (element: Element, eventType: string) => {
+    const clone = element.cloneNode(true);
+    element.parentNode?.replaceChild(clone, element);
+  }
+
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -158,10 +166,14 @@ export default function Main() {
     Millennium.addEventListener('click', () => {
       mode.current = "Millennium"
       Raumschach.classList.remove(`${styles.selected}`)
+      Raumschach.classList.add(`${styles.glitch}`)
+      Millennium.classList.remove(`${styles.glitch}`)
       Millennium.classList.add(`${styles.selected}`)
     })
     Raumschach.addEventListener('click', () => {
       Millennium.classList.remove(`${styles.selected}`)
+      Millennium.classList.add(`${styles.glitch}`)
+      Raumschach.classList.remove(`${styles.glitch}`)
       Raumschach.classList.add(`${styles.selected}`)
       mode.current = "Raumschach"
     })
@@ -169,23 +181,34 @@ export default function Main() {
       if(mode.current != null){
         setGameStart(true)
       }else{
-        alert("select Mode (Millennium or Raumschach) ")
+        SetError('Please Select Mode')
       }
     })
 
+    return () => {
+      removeALLEventListener(startGame, 'click');
+      removeALLEventListener(Raumschach, 'click');
+      removeALLEventListener(Millennium, 'click');
+    }
   }, [])
 
   return (
     <main className={styles.main}>
+      <header>
+        <div>
+          
+        </div>
+      </header>
+      {error && <ErrorPage params={{cause : error, closeActionFunc : SetError}}/>}
       {gameStart && mode.current && username && <Match mode={mode.current} username={username}/>}
       {!gameStart && 
         <div>
           <div className={styles.title}>
-            3D-CHESS
+            3D CHESS
           </div>
           <div className={styles.selMode} id="selMode">
-            <div id="Millennium" className={`${styles.Millennium} ${styles.mode}`}>Millennium</div>
-            <div id="Raumschach" className={`${styles.Raumschach} ${styles.mode}`}>Raumschach</div>
+            <div id="Millennium" data-text='Millennium' className={`${styles.Millennium} ${styles.mode} ${styles.glitch}`}>Millennium</div>
+            <div id="Raumschach" data-text='Raumschach' className={`${styles.Raumschach} ${styles.mode} ${styles.glitch}`}>Raumschach</div>
           </div>
           <button id="startGame" className={styles.start}>Start Game</button>
           <a target="_blank" href="/rule" className={styles.howToPlay}>How to play</a>

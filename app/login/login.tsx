@@ -1,6 +1,6 @@
 'use client'
 import styles from '../../public/css/login.module.css'
-import ErrorPage from './error'
+import ErrorPage from '../common/error'
 
 import {useEffect, useRef, useState} from 'react'
 
