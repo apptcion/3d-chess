@@ -6,7 +6,7 @@ import Main from './main/page'
 export default function Home() {
 
   useEffect(() => {
-    if(process.env.NEXT_PUBLIC_ISPROD){
+    if(process.env.NEXT_PUBLIC_ISPROD === "true"){
       if(getCookie('ticket') === undefined){
         setCookie('from','https://chess.apptcion.site');
         console.log("토큰 없음", getCookie('ticket'))
