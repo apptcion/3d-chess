@@ -127,7 +127,7 @@ export default function Main() {
   const [gameStart, setGameStart] = useState(false)
   const [error, SetError] = useState<string | null>(null)
 
-  const removeALLEventListener = (element: Element, eventType: string) => {
+  const removeALLEventListener = (element: Element) => {
     const clone = element.cloneNode(true);
     element.parentNode?.replaceChild(clone, element);
   }
@@ -186,9 +186,9 @@ export default function Main() {
     })
 
     return () => {
-      removeALLEventListener(startGame, 'click');
-      removeALLEventListener(Raumschach, 'click');
-      removeALLEventListener(Millennium, 'click');
+      removeALLEventListener(startGame);
+      removeALLEventListener(Raumschach);
+      removeALLEventListener(Millennium);
     }
   }, [])
 
