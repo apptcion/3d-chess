@@ -8,7 +8,6 @@ import styled from 'styled-components'
 import Chess_Raumschach from '../Raumschach/page'
 import Chess_Millennium from '../Millennium_remote/page'
 import ErrorPage from '../common/error'
-import { setCookie } from '@/public/js/cookie'
 
 class Dot {
   public x: number
