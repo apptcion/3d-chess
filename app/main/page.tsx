@@ -2,218 +2,332 @@
 import styles from '../../public/css/main.module.css'
 import matchStyle from '../../public/css/match.module.css'
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
+import styled from 'styled-components'
 import Chess_Raumschach from '../Raumschach/page'
 import Chess_Millennium from '../Millennium_remote/page'
 import ErrorPage from '../common/error'
+import { setCookie } from '@/public/js/cookie'
 
+class Dot {
+  public x: number
+  public y: number
+  public z: number
+  public fov = 150
+  public speed = 0
 
-class Dot{
-  
-  public x:number;
-  public y:number;
-  public z:number
-  public fov = 150;
-  public speed = 0;
-
-  constructor(){
-    this.x = Math.random()*window.innerWidth - window.innerWidth/2;
-    this.y = Math.random()*window.innerHeight - window.innerHeight/2;
-    this.z = (window.innerWidth+window.innerHeight)/Math.random();
-    this.speed = Math.random()*8+2;
+  constructor() {
+    this.x = Math.random() * window.innerWidth - window.innerWidth / 2
+    this.y = Math.random() * window.innerHeight - window.innerHeight / 2
+    this.z = (window.innerWidth + window.innerHeight) / Math.random()
+    this.speed = Math.random() * 8 + 2
   }
 
-  draw(context:CanvasRenderingContext2D){
+  draw(context: CanvasRenderingContext2D) {
     this.z -= this.speed
     if (this.z < -this.fov) {
-      this.z += (innerWidth+innerHeight)/2;
+      this.z += (innerWidth + innerHeight) / 2
     }
-    const scale = this.fov / (this.fov + this.z);
-    const x2d = this.x * scale + innerWidth/2;
-    const y2d = this.y * scale + innerHeight/2;
-    if(this.x < window.innerWidth /2){
-      context.fillRect(x2d, y2d, scale*4, scale*3);
-    }else{    
-      context.fillRect(x2d, y2d, scale*4, scale*3);
-    }
+    const scale = this.fov / (this.fov + this.z)
+    const x2d = this.x * scale + innerWidth / 2
+    const y2d = this.y * scale + innerHeight / 2
+    context.fillRect(x2d, y2d, scale * 4, scale * 3)
   }
 }
 
-function Match({mode, username}:{mode:string,username:string}) {
+function Match({
+  mode,
+  username,
+}: {
+  mode: string
+  username: string
+}) {
+  const [team, setTeam] = useState<'white' | 'black' | null>(null)
+  const socket = useRef(io('https://chessback.apptcion.site'))
+  const [target, setTarget] = useState<string | null>(null)
+  const [matched, setMatched] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    const [team, setTeam] = useState<"white" | "black" | null>(null)
-    //const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>(io('http://localhost:49152'))
-    const socket = useRef(io('https://chessback.apptcion.site'))
-    const [target, setTarget] = useState<string | null>(null)
-    const [matched, setMatched] = useState(false)
-    const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    let context: CanvasRenderingContext2D | null = null
+    let animationFrameId = 0
+    let dots: Dot[] = []
 
-
-    useEffect(() => {
-      
-      let context:CanvasRenderingContext2D | null = null
-      let animationFrameId = 0;
-      
-      let dots:Array<Dot> = []
-      const initCanvas = () => {
-        if(canvasRef.current){
-          dots = []
-          context = canvasRef.current.getContext('2d')
-          canvasRef.current.width = window.innerWidth;
-          canvasRef.current.height = window.innerHeight;
-          if(context) context.fillStyle = '#ffffff';
-          for(let i = 0; i <= 800; i++){
-            dots.push(new Dot())
-          }
-        }
+    const initCanvas = () => {
+      if (!canvasRef.current) return
+      dots = []
+      context = canvasRef.current.getContext('2d')
+      canvasRef.current.width = window.innerWidth
+      canvasRef.current.height = window.innerHeight
+      if (context) context.fillStyle = '#ffffff'
+      for (let i = 0; i <= 800; i++) {
+        dots.push(new Dot())
       }
+    }
 
-      initCanvas()
-      window.addEventListener('resize', initCanvas)
-
-      const render = () => {
-        if(context){
-          context.clearRect(0,0,window.innerWidth, window.innerHeight)
-          dots.forEach((dot:Dot) => {
-            dot.draw(context as CanvasRenderingContext2D);
-          })
-        }  
-        animationFrameId = requestAnimationFrame(render);
+    const render = () => {
+      if (context) {
+        context.clearRect(0, 0, window.innerWidth, window.innerHeight)
+        dots.forEach((dot) => dot.draw(context!))
       }
+      animationFrameId = requestAnimationFrame(render)
+    }
 
-      render()
-      if(socket.current){
-        socket.current.emit('join', {mode});
-    
-        socket.current.on('matched', ({target, team}) => {
-          setTeam(team)
-//          setSocket(socket)
-          setTarget(target)
-          setMatched(true)
-      
-        });
-      }
+    initCanvas()
+    window.addEventListener('resize', initCanvas)
+    render()
 
-      return () => {
-        window.removeEventListener('resize', initCanvas)
-        cancelAnimationFrame(animationFrameId);
-      }
-    }, [team,socket,matched, target]);
+    if (socket.current) {
+      socket.current.emit('join', { mode })
+      socket.current.on('matched', ({ target, team }) => {
+        setTeam(team)
+        setTarget(target)
+        setMatched(true)
+      })
+    }
+
+    return () => {
+      window.removeEventListener('resize', initCanvas)
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [mode])
 
   return (
     <div className={matchStyle.wrap}>
-      {!matched && 
+      {!matched && (
         <div className={matchStyle.matching}>
-          <canvas ref={canvasRef} className={matchStyle.canvas}/>
+          <canvas ref={canvasRef} className={matchStyle.canvas} />
           <div className={matchStyle.text}>
             <div className={matchStyle.h1}>Matching</div>
-            <div className={matchStyle.mode}>{mode} mode </div>
+            <div className={matchStyle.mode}>{mode} mode</div>
           </div>
-        </div> }
-      {matched && team && socket.current && target && mode=="Raumschach" && <Chess_Raumschach params={
-        {team,socket: socket.current,target, username}
-      } />}
-      {matched && team && socket && target && mode=="Millennium" && <Chess_Millennium params={
-        {team,socket: socket.current,target, username}
-      } />}
+        </div>
+      )}
+      {matched &&
+        team &&
+        socket.current &&
+        target &&
+        mode === 'Raumschach' && (
+          <Chess_Raumschach
+            params={{ team, socket: socket.current, target, username }}
+          />
+        )}
+      {matched &&
+        team &&
+        socket.current &&
+        target &&
+        mode === 'Millennium' && (
+          <Chess_Millennium
+            params={{ team, socket: socket.current, target, username }}
+          />
+        )}
     </div>
   )
 }
 
+function Circle() {
+  return (
+    <svg
+      width="100%"
+      height="100%"
+      style={{ height: '500px', width: '500px' }}
+      shapeRendering="geometricPrecision"
+    >
+      <defs>
+        <linearGradient id="grad1" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0.2" stopColor="#ff524c" />
+          <stop offset="0.5" stopColor="#7a43f0" />
+          <stop offset="1"   stopColor="#307df0" />
+        </linearGradient>
+      </defs>
+      <g fill="none">
+        <circle
+          cx="50%"
+          cy="50%"
+          r="49.8%"
+          stroke="url(#grad1)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    </svg>
+  )
+}
+
+const Background = styled.div`
+  position: absolute;
+  width: 100vw;
+  height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+`
+
+const Content = styled.div`
+  position: absolute;
+  width: 100vw;
+  z-index: 2;
+`
+
+const Header = styled.div`
+  position: absolute;
+  top : 0px;
+  left: 0px;
+  margin-top: 1vh;
+  width: 100vw;
+  height: 5vh;
+  display: flex;
+  justify-content: end;
+`
+
 export default function Main() {
-  const [username, setUsername] = useState(null)
+  const [username, setUsername] = useState<string | null>(null)
   const mode = useRef<string | null>(null)
   const [gameStart, setGameStart] = useState(false)
-  const [error, SetError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const removeALLEventListener = (element: Element) => {
-    const clone = element.cloneNode(true);
-    element.parentNode?.replaceChild(clone, element);
+  // circle 애니메이션용 상태(ref)
+  const circleData = useRef([
+    { pos: 0, forward: 0.05 },
+    { pos: 1, forward: 0.1 },
+    { pos: -1, forward: 0.075 },
+  ])
+
+  const removeAllEventListeners = (el: Element) => {
+    const clone = el.cloneNode(true)
+    el.parentNode?.replaceChild(clone, el)
   }
-
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    console.log(token)
-    if (token) {
-      fetch('https://chessback.apptcion.site/login/getPayload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ token })
-      }).then(response => {
-        if (response.ok) {
-          return response.json()
-        }
-      }).then(data => {
-        console.log(data)
-        if (data.data != null) {
-          setUsername(data.data.username)
-        } else {
-          location.href = "/login"
-        }
-      })
-    } else {
-      location.href = "/login"
+    if (!token) {
+      location.href = '/login'
+      return
     }
 
-    const Millennium = document.querySelector("#Millennium") as HTMLDivElement
-    const Raumschach = document.querySelector("#Raumschach") as HTMLDivElement
-    const startGame = document.querySelector("#startGame") as HTMLButtonElement
+    fetch('https://chessback.apptcion.site/login/getPayload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data) => {
+        if (data.data) setUsername(data.data.username)
+        else location.href = '/login'
+      })
 
-    Millennium.addEventListener('click', () => {
-      mode.current = "Millennium"
-      Raumschach.classList.remove(`${styles.selected}`)
-      Raumschach.classList.add(`${styles.glitch}`)
-      Millennium.classList.remove(`${styles.glitch}`)
-      Millennium.classList.add(`${styles.selected}`)
-    })
-    Raumschach.addEventListener('click', () => {
-      Millennium.classList.remove(`${styles.selected}`)
-      Millennium.classList.add(`${styles.glitch}`)
-      Raumschach.classList.remove(`${styles.glitch}`)
-      Raumschach.classList.add(`${styles.selected}`)
-      mode.current = "Raumschach"
-    })
-    startGame.addEventListener('click', () => { 
-      if(mode.current != null){
-        setGameStart(true)
-      }else{
-        SetError('Please Select Mode')
+    const mill = document.getElementById('Millennium')!
+    const raum = document.getElementById('Raumschach')!
+    const startBtn = document.getElementById('startGame')!
+    const circleList = document.getElementById('circleList')!
+
+    // 애니메이션 루프
+    let animId: number
+    const animate = () => {
+      if (gameStart) {
+        cancelAnimationFrame(animId)
+        return
       }
+      circleData.current.forEach((d, i) => {
+        const next = d.pos + d.forward
+        if (next > 10 || next < -10) {
+          d.forward = -d.forward
+        }
+        d.pos += d.forward
+        const [tx, ty] =
+          i === 0
+            ? [0, -d.pos]
+            : i === 1
+            ? [d.pos, d.pos]
+            : [-d.pos, d.pos]
+        ;(circleList.children[i] as HTMLElement).style.transform = `matrix(1,0,0,1,${tx},${ty})`
+      })
+      animId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    // 모드 선택
+    mill.addEventListener('click', () => {
+      mode.current = 'Millennium'
+      raum.classList.remove(styles.selected)
+      mill.classList.add(styles.selected)
+    })
+    raum.addEventListener('click', () => {
+      mode.current = 'Raumschach'
+      mill.classList.remove(styles.selected)
+      raum.classList.add(styles.selected)
+    })
+    startBtn.addEventListener('click', () => {
+      if (mode.current) {
+        cancelAnimationFrame(animId)
+        setGameStart(true)
+      } else setError('Please Select Mode')
     })
 
     return () => {
-      removeALLEventListener(startGame);
-      removeALLEventListener(Raumschach);
-      removeALLEventListener(Millennium);
+      cancelAnimationFrame(animId)
+      removeAllEventListeners(mill)
+      removeAllEventListeners(raum)
+      removeAllEventListeners(startBtn)
     }
   }, [])
 
   return (
     <main className={styles.main}>
-      <header>
-        <div>
-          
-        </div>
-      </header>
-      {error && <ErrorPage params={{cause : error, closeActionFunc : SetError}}/>}
-      {gameStart && mode.current && username && <Match mode={mode.current} username={username}/>}
-      {!gameStart && 
-        <div>
-          <div className={styles.title}>
-            3D CHESS
-          </div>
-          <div className={styles.selMode} id="selMode">
-            <div id="Millennium" data-text='Millennium' className={`${styles.Millennium} ${styles.mode} ${styles.glitch}`}>Millennium</div>
-            <div id="Raumschach" data-text='Raumschach' className={`${styles.Raumschach} ${styles.mode} ${styles.glitch}`}>Raumschach</div>
-          </div>
-          <button id="startGame" className={styles.start}>Start Game</button>
-          <a target="_blank" href="/rule" className={styles.howToPlay}>How to play</a>
-        </div>
-      }
+      {error && <ErrorPage params={{ cause: error, closeActionFunc: setError }} />}
+      {gameStart && mode.current && username && (
+        <Match mode={mode.current} username={username} />
+      )}
+      {!gameStart && (
+        <>
+          <Background>
+            <ul id="circleList" style={{ width: 500, height: 500 }}>
+              <li style={{ position: 'absolute' }}> <Circle /> </li>
+              <li style={{ position: 'absolute' }}> <Circle /> </li>
+              <li style={{ position: 'absolute' }}> <Circle /> </li>
+            </ul>
+          </Background>
+          <Content>
+            <Header>
+              <div className={styles.menu} onClick={() => {
+                localStorage.removeItem('token');
+                location.href='/login'
+              }}>Log out</div>
+              <div className={styles.menu} onClick={() => {
+                location.href='/profile'
+              }}>Profile</div>
+            </Header>
+            <div className={styles.title}>3D CHESS</div>
+            <div className={styles.selMode} id="selMode">
+              <div
+                id="Millennium"
+                data-text="Millennium"
+                className={`${styles.mode} ${styles.glitch}`} >
+                Millennium
+              </div>
+              <div
+                id="Raumschach"
+                data-text="Raumschach"
+                className={`${styles.mode} ${styles.glitch}`} >
+                Raumschach
+              </div>
+            </div>
+            <button id="startGame" className={styles.start}>
+              Start Game
+            </button>
+            <a
+              target="_blank"
+              href="/rule"
+              className={styles.howToPlay}
+              rel="noopener noreferrer" >
+              How to play
+            </a>
+          </Content>
+        </>
+      )}
     </main>
   )
 }

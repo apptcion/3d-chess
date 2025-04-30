@@ -221,7 +221,7 @@ export default function Login(){
                     <div><input id="pw" type="password" placeholder='password' onKeyDown={keyDownHandler}/></div>
                 </div>
                 <div className={styles.login_wrap}>
-                    <div id="create" className={styles.create}>Create Account</div>
+                    <div id="create" className={styles.create}>Sign Up</div>
                 </div>
             </div>
             {error && <ErrorPage params={{cause:error, closeActionFunc: SetError}} />}

@@ -7,6 +7,25 @@
     background-color: black;
 }
 
+.menu{
+  position: relative;
+  color: white;
+  font-size: 1.2vw;
+  font-weight: bold;
+  height: 100%;
+  width: 5vw;
+  margin-right: 1.2vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer
+}
+
+.menu:hover{
+  text-decoration: underline;
+  text-decoration-color: white;
+}
+
 @font-face {
   font-family: 'Sterion';
   src: url('/fonts/sterion-font/Sterion-BLLld.ttf') format('truetype');
@@ -19,31 +38,27 @@
     font-weight: bolder;
     margin-top : 25vh;
     display : flex;
+    justify-self: center;
     justify-content: center;
 }
 
 .selMode {
     margin-top : 10vh;
     display : flex;
+    justify-self: center;
     justify-content: space-around;
-    width : 45vw;
-    position : relative;
-    left : 27.5vw;
+    width: 45vw;
 }
 
 .selected{
-    border : solid 2px white !important;
+  text-decoration: underline !important;
+  text-decoration-color: white !important;
+  text-decoration-thickness: 1px !important;
 }
 
-.selected::before,
-.selected::after {
-  display: none !important;
-}
 
 .mode{
-    border : solid 2px black;
     color : white;
-    width : 20vw;
     height : 10vh;
     display: flex;
     justify-content: center;
@@ -53,12 +68,9 @@
     font-size : 3vw;
     font-family: 'Pretendard', sans-serif;
     position: relative;
-    left : 0.5vw;
+    left: 0.3vw;
 }
 
-.mode:hover {
-  border: solid 2px white;
-}
 
 .mode:hover::before,
 .mode:hover::after {
@@ -145,7 +157,6 @@
   --main-bg-color: rgba(46, 213, 116, 0.36);
   --pattern-color: rgba(46, 213, 116, 0.073);
 
-  /* change this rotation value */
   filter: hue-rotate(0deg);
 
   cursor: pointer;
@@ -180,10 +191,9 @@
   transition: background-size 0.2s ease-in-out;
 
   margin-top : 5vh;
-  position: relative;
-  left : 45vw;
   font-size: 1.2vw;
   display: flex;
+  justify-self: center;
   justify-content: center;
   align-items: center;
 }

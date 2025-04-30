@@ -64,7 +64,7 @@
     bottom : 3.5vh;
     border : solid 1px rgba(255,255,255,0.4);
     color : black;
-    transition: 1s;
+    transition: 0.5s;
     width: 100%;
     height : 3.2vw;
     background-color: rgb(210, 210, 210);
@@ -74,7 +74,7 @@
     cursor: pointer;
 }
 .signup:hover{
-    border : solid 1px rgba(255,255,255,1)
+    border : solid 1px rgba(0,0,0,1)
 }
 
 .input{
