@@ -1,7 +1,7 @@
 'use client'
 import styles from '../../public/css/chess.module.css'
 
-import { Canvas, useLoader, useThree } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '@react-three/drei'
 import React, {useEffect, useState, useRef } from 'react'

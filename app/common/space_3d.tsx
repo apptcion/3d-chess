@@ -41,8 +41,8 @@ export function BackGround(){
         }
 
         async init(){
-            let geometrySphereBg = new THREE.SphereGeometry(400, 50, 50);
-            let materialSphereBg = new THREE.MeshBasicMaterial({
+            const geometrySphereBg = new THREE.SphereGeometry(400, 50, 50);
+            const materialSphereBg = new THREE.MeshBasicMaterial({
                 side: THREE.BackSide,
             });
 
