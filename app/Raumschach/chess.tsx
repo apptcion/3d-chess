@@ -10,6 +10,7 @@ import { v4 as uuidv4} from 'uuid'
 import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io';
 import Chat from '../common/chat';
+import { BackGround, Planet } from '../common/space_3d';
 
 const colorConfig = {
     opacity : {
@@ -1829,7 +1830,6 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                 return "e"
         }
     }
-    
 
     useEffect(() => {
         const gameSpace = new Space(scene);
@@ -1970,7 +1970,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
-                camera.position.set(0,10,40)
+                camera.position.set(0,10,50)
 
             }else{
                 for(let i = 1; i <= 5; i++){
@@ -2004,7 +2004,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                         clearInterval(intervalID)
                     }
                 },500)
-                camera.position.set(0,20,-40)
+                camera.position.set(0,10,-50)
             }
         }
 
@@ -2072,22 +2072,10 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
                             // }
                         }
                     }
-                }else if(event.button == 2){
-                    for(let i = intersects.length - 1; i >=0; i--){
-                        if(intersects[i].object.userData?.cell instanceof Cell){
-                            const cellData: Cell = intersects[i].object.userData.cell;
-                            if(!cellData.visible){
-                                intersects[i].object.userData.cell.setVisible(true)
-                                break;
-                            }
-                        }
-                    }
                 }
             }
         };
-        //const disableContextMenu = (event: MouseEvent) => event.preventDefault();
         document.addEventListener("mousedown", clickHandler);
-        //document.addEventListener("contextmenu", disableContextMenu);
 
         return () => {
             document.removeEventListener("click", clickHandler);
@@ -2109,7 +2097,8 @@ export default function Chess({team, socket, target, username}: Props){
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
-    //const [win, setWin] = useState<"white"|"black"|"none">("none");
+    const teamRef = useRef(null);
+    const teamWrapRef = useRef(null);
 
     useEffect(() => {
 
@@ -2118,6 +2107,15 @@ export default function Chess({team, socket, target, username}: Props){
             spaceRef.current.addToScene(wallVisible)
         }
         visibleGlobal = visible
+
+        setTimeout(() => {
+            if(teamWrapRef.current){
+                (teamWrapRef.current as HTMLDivElement).classList.add(`${styles.delete2}`);
+            }
+            if(teamRef.current){
+                (teamRef.current as HTMLDivElement).classList.add(`${styles.delete}`)
+            }
+        },5000)
 
     },[visible, wallVisible])
 
@@ -2143,33 +2141,42 @@ export default function Chess({team, socket, target, username}: Props){
                         MIDDLE: THREE.MOUSE.MIDDLE,
                         RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
                     }}
+                    maxDistance={100}
                 />
-                <ThreeBoard spaceRef={spaceRef} /*turn={turn} setTurn={setTurn}*/ wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
+                <BackGround />
+                <Planet url="/img/planet1.png" position={[50, 10, -30]} size={12}/>
+                <Planet url="/img/planet2.png" position={[-50, 30, -60]} size={11}/>
+                <Planet url="/img/planet3.png" position={[20, -60, 80]} size={9}/>
+                
+                <Planet url="/img/planet4.png" position={[-50, -90, -100]} size={14}/>
+                <Planet url="/img/planet5.jpg" position={[50, 50, 100]} size={20}/>
+                <Planet url="/img/planet6.jpg" position={[-50, 0, 100]} size={10}/>
+                <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                    <div className={styles.visible}>
-                        setVisible
-                        <input 
-                            type="checkbox"
-                            checked={visible}
-                            onChange={(e) => setVisible(e.target.checked)}
-                        />
+                <div className={styles.visible}>
+                    setVisible
+                    <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
+                </div>
+                <div className={styles.wall}>
+                    show Wall
+                    <input type="checkbox" checked={wallVisible} onChange={(e) => setWallVisible(e.target.checked)} />
+                </div>
+                <div className={styles.notice_team} ref={teamRef}>
+                    <div className={styles.notice}>
+                        <div className={`${styles.mode}`} data-text='Raumschach mode'>Millennium mode</div>
+                        <div className={`${styles.team_text}`} data-text='YOUR TEAM'>YOUR TEAM</div>
+                        <div className={`${team == 'white' ? styles.white : styles.black} ${styles.team_wrap}`} ref={teamWrapRef}>
+                            <p className={`${styles.team}`} data-text={team}>{team}</p>
+                        </div>
+                        <div className={`${styles.strategy}`}
+                        data-text={team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}>
+                            {team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}
+                        </div>
                     </div>
-                    <div className={styles.wall}>
-                        show Wall
-                        <input
-                            type="checkbox"
-                            checked={wallVisible}
-                            onChange={(e) => {
-                                setWallVisible(e.target.checked)
-                            }}
-                        />
-                    </div>
-                    <div className={styles.myTeam}>myTeam : {team}</div>
-                    <Chat params={
-                        {socket, username}
-                    }></Chat>
+                </div>
+                <Chat params={{socket, username}}></Chat>
             </div>
         </div>
     )

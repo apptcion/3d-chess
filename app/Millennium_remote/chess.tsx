@@ -1,15 +1,16 @@
 'use client'
 import styles from '../../public/css/chess.module.css'
 
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useLoader, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '@react-three/drei'
-import React, {useEffect, useState, useRef} from 'react'
+import React, {useEffect, useState, useRef } from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { DefaultEventsMap } from 'socket.io';
 import { Socket } from 'socket.io-client';
 import Chat from '../common/chat';
+import { BackGround, Planet } from '../common/space_3d';
 
 const colorConfig = {
     opacity : {
@@ -324,7 +325,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
-        console.log(`myTeam at Unit.move : ${myTeam}`)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
@@ -360,6 +360,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         }, 10)
 
         setTimeout(() => {
+            //interval 프레임 렉 보정
             this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 20.5)
             this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
             this.model.position.setZ(this.row * -mapConfig.cellSize.y + 16.5)
@@ -1822,7 +1823,11 @@ let enemyUnits:any = [];
 let selUnit:unknown = null;
 let turn: "white" | "black" = "white"
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>, wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
+function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} :
+    {spaceRef: React.MutableRefObject<Space | null>,
+    socket: Socket<DefaultEventsMap, DefaultEventsMap>,
+    wallVisible: boolean, myTeam: "white" | "black",
+    target:string}) {
     const { scene, camera } = useThree();
     const changeNumToCol = (columnNum:number) => {
         switch(columnNum){
@@ -1906,16 +1911,6 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} : {spaceRef:
                         //     cellData.setVisible(false)
                         //     break;
                         // }
-                    }
-                }
-            }else if(event.button == 2){
-                for(let i = intersects.length - 1; i >=0; i--){
-                    if(intersects[i].object.userData?.cell instanceof Cell){
-                        const cellData: Cell = intersects[i].object.userData.cell;
-                        if(!cellData.visible){
-                            intersects[i].object.userData.cell.setVisible(true)
-                            break;
-                        }
                     }
                 }
             }
@@ -2073,7 +2068,7 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} : {spaceRef:
                         clearInterval(intervalID)
                     }
                 },500)
-                camera.position.set(0,5,-60)
+                camera.position.set(0,0,-60)
             }
         }
         initGame()
@@ -2081,7 +2076,7 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, socket, target} : {spaceRef:
         document.addEventListener("mousedown", clickHandler);
 
         return () => {
-            document.removeEventListener("click", clickHandler);
+            document.removeEventListener("mousedown", clickHandler);
         };
     }, [camera, scene, spaceRef, target]);
 
@@ -2094,13 +2089,15 @@ interface Props {
     target:string,
     username:string
 }
-
+  
 export default function Chesspage({ params }: { params: Props }) {
     const { team, socket, target, username } = params;
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
+    const teamRef = useRef(null);
+    const teamWrapRef = useRef(null);
 
     useEffect(() => {
 
@@ -2108,7 +2105,16 @@ export default function Chesspage({ params }: { params: Props }) {
             spaceRef.current.setAllVisible(visible)
             spaceRef.current.addToScene(wallVisible)
         }
-        visibleGlobal = visible
+        visibleGlobal = visible;
+
+        setTimeout(() => {
+            if(teamWrapRef.current){
+                (teamWrapRef.current as HTMLDivElement).classList.add(`${styles.delete2}`);
+            }
+            if(teamRef.current){
+                (teamRef.current as HTMLDivElement).classList.add(`${styles.delete}`)
+            }
+        },5000)
 
     },[visible, wallVisible, spaceRef])
 
@@ -2116,8 +2122,11 @@ export default function Chesspage({ params }: { params: Props }) {
         <div className={styles.WRAP}>
             <Canvas className={styles.SPACE}
                 onCreated={(state) => {
-                    state.gl.setClearColor('#87CEEB'); // 하늘색 배경 설정
+                    state.gl.setClearColor('black');
             }} >
+                <ambientLight intensity={0.5} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <directionalLight position={[-10, -10, -5]} intensity={0.5} />
                 
                 {/** temp */}
                 <directionalLight position={[0,100,0]}></directionalLight>
@@ -2135,33 +2144,42 @@ export default function Chesspage({ params }: { params: Props }) {
                         MIDDLE: THREE.MOUSE.MIDDLE,
                         RIGHT: THREE.MOUSE.RIGHT
                     }}
+                    maxDistance={100}
                 />
-                <ThreeBoard spaceRef={spaceRef} /*turn={turn} setTurn={setTurn}*/ wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
+                <BackGround />
+                <Planet url="/img/planet1.png" position={[40, 25, -35]} size={12}/>
+                <Planet url="/img/planet2.png" position={[-35, 0, -70]} size={11}/>
+                <Planet url="/img/planet4.png" position={[100, -110, -110]} size={14}/>
+                
+                <Planet url="/img/planet3.png" position={[-50, -60, 40]} size={9}/>
+                <Planet url="/img/planet5.jpg" position={[50, 50, 100]} size={20}/>
+                <Planet url="/img/planet6.jpg" position={[-50, 0, 100]} size={10}/>
+                <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                    <div className={styles.visible}>
-                        setVisible
-                        <input 
-                            type="checkbox"
-                            checked={visible}
-                            onChange={(e) => setVisible(e.target.checked)}
-                        />
+                <div className={styles.visible}>
+                    setVisible
+                    <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
+                </div>
+                <div className={styles.wall}>
+                    show Wall
+                    <input type="checkbox" checked={wallVisible} onChange={(e) => setWallVisible(e.target.checked)} />
+                </div>
+                <div className={styles.notice_team} ref={teamRef}>
+                    <div className={styles.notice}>
+                        <div className={`${styles.mode}`} data-text='Millennium mode'>Millennium mode</div>
+                        <div className={`${styles.team_text}`} data-text='YOUR TEAM'>YOUR TEAM</div>
+                        <div className={`${team == 'white' ? styles.white : styles.black} ${styles.team_wrap}`} ref={teamWrapRef}>
+                            <p className={`${styles.team}`} data-text={team}>{team}</p>
+                        </div>
+                        <div className={`${styles.strategy}`}
+                        data-text={team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}>
+                            {team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}
+                        </div>
                     </div>
-                    <div className={styles.wall}>
-                        show Wall
-                        <input
-                            type="checkbox"
-                            checked={wallVisible}
-                            onChange={(e) => {
-                                setWallVisible(e.target.checked)
-                            }}
-                        />
-                    </div>
-                    <div className={styles.myTeam}>myTeam : {team}</div>
-                    <Chat params={
-                        {socket, username}
-                    }></Chat>
+                </div>
+                <Chat params={{socket, username}}></Chat>
             </div>
         </div>
     )

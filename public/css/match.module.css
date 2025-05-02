@@ -37,17 +37,16 @@
 .h1{
     font-size : 5vw;
     animation: matching forwards 1s;
-    animation-delay: 3s;
+    animation-delay: 2s;
 }
 
 .mode{
     animation: matching forwards 1s;
-    animation-delay: 3.5s;
+    animation-delay: 2s;
     font-size : 1vw;
 }
 
 .matching{
-    
     display: flex;
     justify-content: center;
     align-items: center;
