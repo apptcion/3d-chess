@@ -11,6 +11,8 @@ import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io';
 import Chat from '../common/chat';
 import { BackGround, Planet } from '../common/space_3d';
+import TeamNotice from '../common/team_notice';
+import SettingPage from '../common/setting';
 
 const colorConfig = {
     opacity : {
@@ -249,21 +251,21 @@ abstract class Unit{ // == piece ( 체스 기물 )
             this.model.position.setY(this.model.position.y + 0.2)
         },10)
         setTimeout(() => {
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01 + 3)
             clearInterval(animeId)
         },150)
     }
 
     public unitDown(){
-        this.model.position.set(this.convertCol() * mapConfig.cellSize.x -13,this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01 + 3, this.row * -mapConfig.cellSize.y + 9)
-        let tempCount = 3;
         const animeId = setInterval(() => {
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01 + tempCount)
-            tempCount -= 0.2
+            this.model.position.setY(this.model.position.y - 0.2)
         },10)
         setTimeout(() => {
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
             clearInterval(animeId)
         },150)
     }
+
 
     public hideCanCell(){
         this.showingCell.forEach(cell => {
@@ -280,7 +282,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
     }
 
     public update(scene:THREE.Scene, myTeam:string){
-        scene.remove(this.model)
         if(this.death){
             if(this.team == myTeam){
                 myUnits = myUnits.filter((unit:Unit) => {
@@ -300,22 +301,21 @@ abstract class Unit{ // == piece ( 체스 기물 )
                 alert("you are win")
                 location.href ="/"
             }
-        }else{        
-            scene.add(this.model)
+            scene.remove(this.model)
         }
     }
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
+        //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
-        console.log(target)
 
+        const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
+            console.log(cell.piece.ID)
             cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
         }
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
@@ -325,54 +325,32 @@ abstract class Unit{ // == piece ( 체스 기물 )
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-        const onceY = ( this.layer - cell.layer ) / 30;
-        const onceZ = ( this.row - cell.row ) / 30;
 
+        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
+        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
+        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
+
+        if(this.team == myTeam){
+            distanceY += 3;
+        }
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-        
-        const animeId = setInterval(() => {
-            this.model.position.setX(this.model.position.x - (onceX * mapConfig.cellSize.x))
-            this.model.position.setY(this.model.position.y - (onceY * mapConfig.cellSize.Gap))
-            this.model.position.setZ(this.model.position.z + (onceZ * mapConfig.cellSize.y))
+
+        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
+            this.model.position.setX(this.model.position.x - distanceX/30)
+            this.model.position.setY(this.model.position.y - distanceY/30)
+            this.model.position.setZ(this.model.position.z + distanceZ/30)
         }, 10)
 
         setTimeout(() => {
-            this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5) // 원래 공식에 살짝 조정
-            this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
-            if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                scene.remove(this.model)
-                const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
-                newObj.addToScene(scene)
-                myUnits.push(newObj)
-                if(myMove){    
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-                }
-            }
-            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                scene.remove(this.model)
-                const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
-                newObj.addToScene(scene);
-                myUnits.push(newObj)
-                if(myMove){    
-                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                    })})
-    
-                }
+            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+            if(targetPiece){
+                targetPiece.update(scene, myTeam)
             }
         }, 300)
         this.wasHandled = true;
@@ -1813,7 +1791,10 @@ let selUnit:unknown = null;
 let turn: "white" | "black" = "white"
 let clickHandler:(event:MouseEvent) => void;
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, target} : {spaceRef: React.MutableRefObject<Space | null>,/* turn:"white" | "black", setTurn:React.Dispatch<React.SetStateAction<"white" | "black">>,*/ wallVisible:boolean, myTeam: "white" | "black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, target:string}) {
+function ThreeBoard({spaceRef, myTeam, socket, target} :
+    {spaceRef: React.MutableRefObject<Space | null>,
+    socket:Socket<DefaultEventsMap, DefaultEventsMap>,
+    myTeam: "white" | "black",  target:string}) {
     const { scene, camera } = useThree();
 
     const changeNumToCol = (columnNum:number) => {
@@ -1834,7 +1815,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
     useEffect(() => {
         const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
-        gameSpace.addToScene(wallVisible)
+        gameSpace.addToScene(false)
 
         socket.on('moveUnit', ({unitID, moveData}:{unitID:string, moveData:string})=>{
             enemyUnits.forEach((unit:Unit) => {
@@ -2080,7 +2061,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible, myTeam, socket, t
         return () => {
             document.removeEventListener("click", clickHandler);
         };
-    }, [camera, scene, spaceRef, target]);
+    }, [camera, scene, spaceRef]);
 
     return null;
 }
@@ -2097,8 +2078,6 @@ export default function Chess({team, socket, target, username}: Props){
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false)
-    const teamRef = useRef(null);
-    const teamWrapRef = useRef(null);
 
     useEffect(() => {
 
@@ -2107,26 +2086,12 @@ export default function Chess({team, socket, target, username}: Props){
             spaceRef.current.addToScene(wallVisible)
         }
         visibleGlobal = visible
-
-        setTimeout(() => {
-            if(teamWrapRef.current){
-                (teamWrapRef.current as HTMLDivElement).classList.add(`${styles.delete2}`);
-            }
-            if(teamRef.current){
-                (teamRef.current as HTMLDivElement).classList.add(`${styles.delete}`)
-            }
-        },5000)
-
     },[visible, wallVisible])
 
     return (
         <div className={styles.WRAP}>
             <Canvas className={styles.SPACE}>
-                
-                {/** dev */}
-                <axesHelper></axesHelper>
 
-                {/** temp */}
                 <directionalLight position={[0,400,0]}    ></directionalLight>
                 <directionalLight position={[0,-400,0]}   ></directionalLight>
                 <directionalLight position={[-400,-14,0]} ></directionalLight>
@@ -2151,7 +2116,7 @@ export default function Chess({team, socket, target, username}: Props){
                 <Planet url="/img/planet4.png" position={[-50, -90, -100]} size={14}/>
                 <Planet url="/img/planet5.jpg" position={[50, 50, 100]} size={20}/>
                 <Planet url="/img/planet6.jpg" position={[-50, 0, 100]} size={10}/>
-                <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team} socket={socket} target={target}/>
+                <ThreeBoard spaceRef={spaceRef} myTeam={team} socket={socket} target={target}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
@@ -2163,19 +2128,8 @@ export default function Chess({team, socket, target, username}: Props){
                     show Wall
                     <input type="checkbox" checked={wallVisible} onChange={(e) => setWallVisible(e.target.checked)} />
                 </div>
-                <div className={styles.notice_team} ref={teamRef}>
-                    <div className={styles.notice}>
-                        <div className={`${styles.mode}`} data-text='Raumschach mode'>Millennium mode</div>
-                        <div className={`${styles.team_text}`} data-text='YOUR TEAM'>YOUR TEAM</div>
-                        <div className={`${team == 'white' ? styles.white : styles.black} ${styles.team_wrap}`} ref={teamWrapRef}>
-                            <p className={`${styles.team}`} data-text={team}>{team}</p>
-                        </div>
-                        <div className={`${styles.strategy}`}
-                        data-text={team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}>
-                            {team == 'white' ? 'FIRST MOVE ADVANTAGE' : 'SECOND MOVE STRATEGY'}
-                        </div>
-                    </div>
-                </div>
+                <SettingPage setVisible={setVisible} setShowWall={setWallVisible }/>
+                <TeamNotice mode={'Millennium'} team={team}/>
                 <Chat params={{socket, username}}></Chat>
             </div>
         </div>

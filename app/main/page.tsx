@@ -20,7 +20,7 @@ class Dot {
     this.x = Math.random() * window.innerWidth - window.innerWidth / 2
     this.y = Math.random() * window.innerHeight - window.innerHeight / 2
     this.z = (window.innerWidth + window.innerHeight) / Math.random()
-    this.speed = Math.random() * 8 + 2
+    this.speed = Math.random() * 18 + 2
   }
 
   draw(context: CanvasRenderingContext2D) {

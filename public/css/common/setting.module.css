@@ -1,0 +1,17 @@
+.page{
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: width 1s 0s;
+    overflow: hidden;
+    z-index: 3;
+    background-color: black;
+}
+.closed{
+    width: 0vw !important;
+}
+
+.show{
+    width: 10vw;
+    height: 100vh;
+}

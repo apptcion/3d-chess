@@ -1,5 +1,5 @@
 "use client";
-import styles from "../../public/css/chat.module.css";
+import styles from "../../public/css/common/chat.module.css";
 import { useState } from "react";
 import { Socket } from "socket.io-client";
 

@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef } from 'react'
-import styles from '../../public/css/error.module.css'
+import styles from '../../public/css/common/error.module.css'
 
 interface Props{
     cause:string,
