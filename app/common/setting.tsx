@@ -1,5 +1,5 @@
 'use client'
-import {useEffect, useRef, useState} from 'react'
+import {useState} from 'react'
 import styles from '../../public/css/common/setting.module.css'
 import settingIcon from '../../public/img/setting.png'
 import Image from 'next/image'
