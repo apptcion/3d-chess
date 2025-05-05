@@ -20,7 +20,7 @@ class Dot {
     this.x = Math.random() * window.innerWidth - window.innerWidth / 2
     this.y = Math.random() * window.innerHeight - window.innerHeight / 2
     this.z = (window.innerWidth + window.innerHeight) / Math.random()
-    this.speed = Math.random() * 18 + 2
+    this.speed = Math.random() * 8 + 2
   }
 
   draw(context: CanvasRenderingContext2D) {
@@ -66,11 +66,16 @@ function Match({
     }
 
     const render = () => {
-      if (context) {
-        context.clearRect(0, 0, window.innerWidth, window.innerHeight)
-        dots.forEach((dot) => dot.draw(context!))
+      if(matched){
+        console.log("별 애니메이션 정지됨")
+        cancelAnimationFrame(animationFrameId)
+      }else{
+        if (context) {
+          context.clearRect(0, 0, window.innerWidth, window.innerHeight)
+          dots.forEach((dot) => dot.draw(context!))
+        }
+        animationFrameId = requestAnimationFrame(render)
       }
-      animationFrameId = requestAnimationFrame(render)
     }
 
     initCanvas()
@@ -86,11 +91,16 @@ function Match({
       })
     }
 
+    if(matched){
+      cancelAnimationFrame(animationFrameId)
+      window.removeEventListener('resize', initCanvas);
+    }
+
     return () => {
       window.removeEventListener('resize', initCanvas)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [mode])
+  }, [mode, matched])
 
   return (
     <div className={matchStyle.wrap}>
@@ -188,6 +198,10 @@ export default function Main() {
   const [gameStart, setGameStart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const MillRef = useRef(null);
+  const RaumRef = useRef(null);
+  const StartBtnRef = useRef(null);
+
   // circle 애니메이션용 상태(ref)
   const circleData = useRef([
     { pos: 0, forward: 0.05 },
@@ -217,62 +231,77 @@ export default function Main() {
         if (data.data) setUsername(data.data.username)
         else location.href = '/login'
       })
-
-    const mill = document.getElementById('Millennium')!
-    const raum = document.getElementById('Raumschach')!
-    const startBtn = document.getElementById('startGame')!
     const circleList = document.getElementById('circleList')!
 
     // 애니메이션 루프
-    let animId: number
+    let animId: number = 0;
     const animate = () => {
       if (gameStart) {
+        console.log("원 애니메이션 정지됨")
         cancelAnimationFrame(animId)
-        return
+      }else{
+        circleData.current.forEach((d, i) => {
+          const next = d.pos + d.forward
+          if (next > 10 || next < -10) {
+            d.forward = -d.forward
+          }
+          d.pos += d.forward
+          const [tx, ty] =
+            i === 0
+              ? [0, -d.pos]
+              : i === 1
+              ? [d.pos, d.pos]
+              : [-d.pos, d.pos]
+          ;(circleList.children[i] as HTMLElement).style.transform = `matrix(1,0,0,1,${tx},${ty})`
+        })
+        animId = requestAnimationFrame(animate)
       }
-      circleData.current.forEach((d, i) => {
-        const next = d.pos + d.forward
-        if (next > 10 || next < -10) {
-          d.forward = -d.forward
-        }
-        d.pos += d.forward
-        const [tx, ty] =
-          i === 0
-            ? [0, -d.pos]
-            : i === 1
-            ? [d.pos, d.pos]
-            : [-d.pos, d.pos]
-        ;(circleList.children[i] as HTMLElement).style.transform = `matrix(1,0,0,1,${tx},${ty})`
-      })
-      animId = requestAnimationFrame(animate)
     }
     animate()
-
     // 모드 선택
-    mill.addEventListener('click', () => {
-      mode.current = 'Millennium'
-      raum.classList.remove(styles.selected)
-      mill.classList.add(styles.selected)
-    })
-    raum.addEventListener('click', () => {
-      mode.current = 'Raumschach'
-      mill.classList.remove(styles.selected)
-      raum.classList.add(styles.selected)
-    })
-    startBtn.addEventListener('click', () => {
-      if (mode.current) {
-        cancelAnimationFrame(animId)
-        setGameStart(true)
-      } else setError('Please Select Mode')
-    })
+    if(MillRef.current && RaumRef.current){
+      const mill = MillRef.current as HTMLElement
+      const raum = RaumRef.current as HTMLElement
+      mill.addEventListener('click', () => {
+        mode.current = 'Millennium'
+        raum.classList.remove(styles.selected)
+        mill.classList.add(styles.selected)
+      })
+    }
+
+    if(MillRef.current && RaumRef.current){
+      const mill = MillRef.current as HTMLElement
+      const raum = RaumRef.current as HTMLElement
+      raum.addEventListener('click', () => {
+        mode.current = 'Raumschach'
+        mill.classList.remove(styles.selected)
+        raum.classList.add(styles.selected)
+      })
+    }
+
+    if(StartBtnRef.current){
+      const startBtn = StartBtnRef.current as HTMLButtonElement;
+      startBtn.addEventListener('click', () => {
+        if (mode.current) {
+          cancelAnimationFrame(animId)
+          setGameStart(true)
+        } else setError('Please Select Mode')
+      })
+    }
 
     return () => {
       cancelAnimationFrame(animId)
-      removeAllEventListeners(mill)
-      removeAllEventListeners(raum)
-      removeAllEventListeners(startBtn)
+      if(MillRef.current){
+        removeAllEventListeners(MillRef.current)
+      }
+      if(RaumRef.current){
+        removeAllEventListeners(RaumRef.current)
+      }
+      if(StartBtnRef.current){
+        removeAllEventListeners(StartBtnRef.current)
+      }
     }
-  }, [])
+  }, [gameStart])
 
   return (
     <main className={styles.main}>
@@ -302,19 +331,17 @@ export default function Main() {
             <div className={styles.title}>3D CHESS</div>
             <div className={styles.selMode} id="selMode">
               <div
-                id="Millennium"
-                data-text="Millennium"
+                id="Millennium" ref={MillRef} data-text="Millennium"
                 className={`${styles.mode} ${styles.glitch}`} >
                 Millennium
               </div>
               <div
-                id="Raumschach"
-                data-text="Raumschach"
+                id="Raumschach" ref={RaumRef} data-text="Raumschach"
                 className={`${styles.mode} ${styles.glitch}`} >
                 Raumschach
               </div>
             </div>
-            <button id="startGame" className={styles.start}>
+            <button id="startGame" className={styles.start} ref={StartBtnRef}>
               Start Game
             </button>
             <a

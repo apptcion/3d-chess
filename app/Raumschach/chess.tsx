@@ -2128,7 +2128,7 @@ export default function Chess({team, socket, target, username}: Props){
                     show Wall
                     <input type="checkbox" checked={wallVisible} onChange={(e) => setWallVisible(e.target.checked)} />
                 </div>
-                <SettingPage setVisible={setVisible} setShowWall={setWallVisible }/>
+                <SettingPage showCell={visible} showWall={wallVisible} setVisible={setVisible} setShowWall={setWallVisible }/>
                 <TeamNotice mode={'Millennium'} team={team}/>
                 <Chat params={{socket, username}}></Chat>
             </div>
