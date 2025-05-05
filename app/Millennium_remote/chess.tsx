@@ -313,6 +313,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
     }
 
     move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, target:string){
+        target = target;
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -321,7 +322,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
-            console.log(cell.piece.ID)
             cell.piece.death = true;
         }
         //이동한 칸에 기물 정보 추가
@@ -1672,85 +1672,90 @@ class Pawns extends Unit{
 
     }
 
-   move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
-            //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
-            const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
-            nowCell.onUnit = false;
-            nowCell.onUnitTeam = "none"
-            nowCell.piece = null
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
+        //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
+        const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
+        nowCell.onUnit = false;
+        nowCell.onUnitTeam = "none"
+        nowCell.piece = null
 
-            if(cell.canAttack && cell.piece){
-                cell.piece.death = true;
-                console.log("Kill")
-                cell.piece.update(scene, myTeam)
-            }
-    
-            //이동한 칸에 기물 정보 추가
-            cell.onUnit = true;
-            cell.onUnitTeam = this.team;
-            cell.piece = this;
-    
-            //이동 가능 칸 숨기기
-            this.hideCanCell()
-            //기물 옮기기 애니메이션
-            const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-            const onceY = ( this.layer - cell.layer ) / 30;
-            const onceZ = ( this.row - cell.row ) / 30;
-    
-            //내 위치 변경
-            this.layer = cell.layer;
-            this.row = cell.row;
-            this.column = cell.column;
-            
-            const animeId = setInterval(() => {
-                this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-                this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-                this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
-            }, 10)
-    
-            setTimeout(() => {
-                this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 20.5)
-                this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 34.5)
-                this.model.position.setZ(this.row * -mapConfig.cellSize.y + 16.5)
-                clearInterval(animeId)
-                if(this.team == "white" && cell.row == 8 && cell.layer == 3 && myMove){
-                    myUnits = myUnits.filter((unit:Unit) => {
-                        return unit.ID != this.ID
-                    })
-                    
-                    scene.remove(this.model)
-                    const newObj = new Queen(myTeam, 8 , this.column, 3, this.board)
-                    newObj.addToScene(scene)
-                    myUnits.push(newObj)
-                    if(myMove){    
-                        socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                            return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                        })})
-                    }
-                }
-                else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
-                    myUnits = myUnits.filter((unit:Unit) => {
-                        return unit.ID != this.ID
-                    })
-                    scene.remove(this.model)
-                    const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
-                    newObj.addToScene(scene);
-                    myUnits.push(newObj)
-                    if(myMove){    
-                        socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
-                            return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
-                        })})
-                    }
-                }
-            }, 300)
-            this.wasHandled = true;
-            if(myMove){
-                socket.emit('moveUnit', {
-                    unitID: this.ID,
-                    moveData: `${this.row}_${this.convertCol()}_${this.layer}`
-                })
-            }
+        const targetPiece = cell.piece;
+        if(cell.canAttack && cell.piece){
+            cell.piece.death = true;
         }
+
+        //이동한 칸에 기물 정보 추가
+        cell.onUnit = true;
+        cell.onUnitTeam = this.team;
+        cell.piece = this;
+
+        //이동 가능 칸 숨기기
+        this.hideCanCell()
+        //기물 옮기기 애니메이션
+        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
+        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
+        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
+
+        if(this.team == myTeam){
+            distanceY += 3;
+        }
+        //내 위치 변경
+        this.layer = cell.layer;
+        this.row = cell.row;
+        this.column = cell.column;
+
+        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
+            this.model.position.setX(this.model.position.x - distanceX/30)
+            this.model.position.setY(this.model.position.y - distanceY/30)
+            this.model.position.setZ(this.model.position.z + distanceZ/30)
+        }, 10)
+
+        setTimeout(() => {
+            clearInterval(animeId)
+            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -22.5 + 2);
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 22.5 - 6)
+            if(targetPiece){
+                targetPiece.update(scene, myTeam)
+            }
+            if(this.team == "white" && cell.row == 8 && cell.layer == 3 && myMove){
+                myUnits = myUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+                
+                scene.remove(this.model)
+                const newObj = new Queen(myTeam, 8 , this.column, 3, this.board)
+                newObj.addToScene(scene)
+                myUnits.push(newObj)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                }
+            }
+            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1 && myMove){
+                myUnits = myUnits.filter((unit:Unit) => {
+                    return unit.ID != this.ID
+                })
+                scene.remove(this.model)
+                const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
+                newObj.addToScene(scene);
+                myUnits.push(newObj)
+                if(myMove){    
+                    socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
+                        return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
+                    })})
+                }
+            }
+        }, 300)
+        this.wasHandled = true;
+        if(myMove){
+            socket.emit('moveUnit', {
+                unitID: this.ID,
+                moveData: `${this.row}_${this.convertCol()}_${this.layer}`
+            })
+        }
+    }
 
 }
 ////////////////////////////////////////////////////////
@@ -1888,7 +1893,6 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
                             selUnit = null;
                         }/////////////////////////////////////////////////////////////////////////////////////////////////////////
                         else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
-                            
                             const unit = cellData.piece;
                             if(selUnit instanceof Unit){
                                 if(selUnit != unit){

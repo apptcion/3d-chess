@@ -1501,10 +1501,10 @@ class Pawns extends Unit{
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+        
+        const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
         }
 
         //이동한 칸에 기물 정보 추가
@@ -1515,26 +1515,32 @@ class Pawns extends Unit{
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-        const onceY = ( this.layer - cell.layer ) / 30;
-        const onceZ = ( this.row - cell.row ) / 30;
+        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
+        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
+        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
 
+        if(this.team == myTeam){
+            distanceY += 3;
+        }
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-        
-        const animeId = setInterval(() => {
-            this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-            this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-            this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
+
+        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
+            this.model.position.setX(this.model.position.x - distanceX/30)
+            this.model.position.setY(this.model.position.y - distanceY/30)
+            this.model.position.setZ(this.model.position.z + distanceZ/30)
         }, 10)
 
         setTimeout(() => {
-            this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5) // 원래 공식에 살짝 조정
-            this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
+            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+            if(targetPiece){
+                targetPiece.update(scene, myTeam)
+            }
             if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
@@ -2005,19 +2011,24 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
                 if(event.button == 0) {//좌클릭
                     for(let i = 0; i < intersects.length; i++){
                         if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
-                            if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
-                                selUnit.hideCanCell()
-                                selUnit.unitDown()
-                            }
                             const unit = intersects[i].object.userData.unit;
-                            if(selUnit != unit){        //다른 유닛 잡기             
+                            if(selUnit instanceof Unit){
+                                if(selUnit != unit){
+                                    selUnit.hideCanCell()
+                                    selUnit.unitDown()
+    
+                                    unit.showCanCell();
+                                    unit.unitUp();
+                                    selUnit = unit;
+                                }else{
+                                    unit.unitDown();
+                                    unit.hideCanCell();
+                                    selUnit = null
+                                }
+                            }else{
                                 unit.showCanCell();
                                 unit.unitUp();
-                                selUnit = unit;
-                            }else{ // 잡기 취소
-                                unit.unitDown();
-                                unit.hideCanCell();
-                                selUnit = null;
+                                selUnit = unit
                             }
                             break;
                         }else if(intersects[i].object.userData?.cell instanceof Cell){
@@ -2030,20 +2041,24 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
                                 selUnit = null;
                             }/////////////////////////////////////////////////////////////////////////////////////////////////////////
                             else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
-                                if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
-                                    selUnit.hideCanCell()
-                                    selUnit.unitDown()
-                                }
                                 const unit = cellData.piece;
-                                if(unit != null){
-                                    if(selUnit != unit){        //다른 유닛 잡기             
+                                if(selUnit instanceof Unit){
+                                    if(selUnit != unit){
+                                        selUnit.hideCanCell()
+                                        selUnit.unitDown()
+        
                                         unit.showCanCell();
                                         unit.unitUp();
                                         selUnit = unit;
-                                    }else{ // 잡기 취소
+                                    }else{
                                         unit.unitDown();
-                                        selUnit = null;
+                                        unit.hideCanCell();
+                                        selUnit = null
                                     }
+                                }else{
+                                    unit.showCanCell();
+                                    unit.unitUp();
+                                    selUnit = unit
                                 }
                                 break;
                             }
