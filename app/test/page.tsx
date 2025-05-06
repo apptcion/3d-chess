@@ -2,7 +2,7 @@
 import styles from '../../public/css/test.module.css'
 import { Timer } from '../common/timer'
 import Millenium from '../rule/millennium'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 function Win(){
 
