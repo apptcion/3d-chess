@@ -15,7 +15,7 @@ export default function TeamNotice({mode, team}:{mode:string, team:string}){
             if(teamRef.current){
                 (teamRef.current as HTMLDivElement).classList.add(`${styles.delete}`)
             }
-        },2000)
+        },4000)
     })
 
     return(

@@ -1,0 +1,58 @@
+.timerWrap{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 10vh;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .center{
+    position: absolute;
+    top: 0;
+    left: 35vw;
+    width: 30vw;
+    height: 10vh;
+  }
+  
+  .centerSVG{
+    width: 30vw;
+    height: 10vh;
+  }
+  
+  .timer{
+    position: absolute;
+    color: black;
+    top: 0;
+    left: 0;
+    width: 30vw;
+    height: 10vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .turn{
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    top: 14px;
+    font-size: 15px;
+  }
+  
+  .time{
+    position: relative;
+    top: 5px;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  
+  .svg{
+    margin-top: 2.25vh;
+    width: 40vw;
+    height: 10vh;
+  }

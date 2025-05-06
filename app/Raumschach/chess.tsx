@@ -8,11 +8,12 @@ import React, {useEffect, useState, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { Socket } from 'socket.io-client';
-import { DefaultEventsMap } from 'socket.io';
 import Chat from '../common/chat';
 import { BackGround, Planet } from '../common/space_3d';
 import TeamNotice from '../common/team_notice';
 import SettingPage from '../common/setting';
+import { Timer } from '../common/timer';
+import GameOverPage from '../common/gameover';
 
 const colorConfig = {
     opacity : {
@@ -215,6 +216,11 @@ class Board implements board{
     ){}
 }
 
+interface gameOverObj {
+    gameover: boolean,
+    winner: string
+}
+
 ////////////////////////////////////////////////////////
 
 abstract class Unit{ // == piece ( 체스 기물 )
@@ -281,7 +287,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
         this.showingCell = [];
     }
 
-    public update(scene:THREE.Scene, myTeam:string){
+    public update(scene:THREE.Scene, myTeam:string, setGameOver: React.Dispatch<gameOverObj>){
         if(this.death){
             if(this.team == myTeam){
                 myUnits = myUnits.filter((unit:Unit) => {
@@ -293,19 +299,22 @@ abstract class Unit{ // == piece ( 체스 기물 )
                 })
             }
             if(this.piece == "KING" && this.team == myTeam){
-                console.log("Kill King")
                 alert("you are lose")
+                setGameOver({gameover: true, winner: myTeam == 'white' ? 'black' : 'white'})
                 location.href ="/"
                 //setGameOver
             }else if(this.piece == "KING" && this.team != myTeam){
                 alert("you are win")
+                setGameOver({gameover: true, winner: myTeam})
                 location.href ="/"
             }
             scene.remove(this.model)
         }
     }
 
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket<DefaultEventsMap, DefaultEventsMap>, myMove:boolean, _target:string){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", 
+        socket:Socket, setGameOver: React.Dispatch<gameOverObj>,
+        myMove:boolean, _target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -350,7 +359,7 @@ abstract class Unit{ // == piece ( 체스 기물 )
             this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
             this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
             if(targetPiece){
-                targetPiece.update(scene, myTeam)
+                targetPiece.update(scene, myTeam, setGameOver)
             }
         }, 300)
         this.wasHandled = true;
@@ -1495,7 +1504,9 @@ class Pawns extends Unit{
                 }
             }
     }
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black", socket:Socket, myMove:boolean, target:string){
+    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black",
+        socket:Socket, setGameOver: React.Dispatch<gameOverObj>, 
+        myMove:boolean, target:string){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -1539,7 +1550,7 @@ class Pawns extends Unit{
             this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
             this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
             if(targetPiece){
-                targetPiece.update(scene, myTeam)
+                targetPiece.update(scene, myTeam, setGameOver)
             }
             if(this.team == "white" && cell.row == 5 && cell.layer == 5 && myMove){
                 myUnits = myUnits.filter((unit:Unit) => {
@@ -1567,7 +1578,6 @@ class Pawns extends Unit{
                     socket.emit('exchangeUnit', {target, unit : myUnits.map((unit:Unit) => {
                         return `${unit.ID}_${unit.row}_${unit.column}_${unit.layer}`
                     })})
-    
                 }
             }
         }, 300)
@@ -1792,16 +1802,17 @@ class Space implements space {
 
 let myUnits:any = []
 let enemyUnits:any = [];
-// const myTeam: "white" | "black" = 'white'
-let selUnit:unknown = null;
-let turn: "white" | "black" = "white"
-let clickHandler:(event:MouseEvent) => void;
+let selUnit:Unit | null = null;
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, myTeam, socket, target} :
+function ThreeBoard({spaceRef, socket, setTurn, setGameOver, myTeam, target} :
     {spaceRef: React.MutableRefObject<Space | null>,
-    socket:Socket<DefaultEventsMap, DefaultEventsMap>,
-    myTeam: "white" | "black",  target:string}) {
+    socket: Socket,
+    setTurn: React.Dispatch<string>
+    setGameOver: React.Dispatch<gameOverObj>
+    myTeam: "white" | "black", target:string}) {
+        
     const { scene, camera } = useThree();
+    const turn = useRef('white')
 
     const changeNumToCol = (columnNum:number) => {
         switch(columnNum){
@@ -1818,6 +1829,82 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
         }
     }
 
+    const clickHandler = (event: MouseEvent) => {
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects(scene.children);
+
+        if (intersects.length > 0) {
+            if(event.button == 0) {//좌클릭
+                for(let i = 0; i < intersects.length; i++){
+                    if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
+                        const unit = intersects[i].object.userData.unit;
+                        if(selUnit instanceof Unit){
+                            if(selUnit != unit){
+                                selUnit.hideCanCell()
+                                selUnit.unitDown()
+
+                                unit.showCanCell();
+                                unit.unitUp();
+                                selUnit = unit;
+                            }else{
+                                unit.unitDown();
+                                unit.hideCanCell();
+                                selUnit = null
+                            }
+                        }else{
+                            unit.showCanCell();
+                            unit.unitUp();
+                            selUnit = unit
+                        }
+                        break;
+                    }else if(intersects[i].object.userData?.cell instanceof Cell){
+                        const cellData: Cell = intersects[i].object.userData.cell;
+                        if(cellData.canGo){
+                            if(selUnit instanceof Unit){
+                                selUnit.move(cellData, scene, myTeam, socket, setGameOver, true, target)
+                                turn.current = turn.current == "white" ? "black" : "white"
+                                setTurn(turn.current)
+                            }
+                            selUnit = null;
+                        }/////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn.current && cellData.piece.team == myTeam){
+                            const unit = cellData.piece;
+                            if(selUnit instanceof Unit){
+                                if(selUnit != unit){
+                                    selUnit.hideCanCell()
+                                    selUnit.unitDown()
+    
+                                    unit.showCanCell();
+                                    unit.unitUp();
+                                    selUnit = unit;
+                                }else{
+                                    unit.unitDown();
+                                    unit.hideCanCell();
+                                    selUnit = null
+                                }
+                            }else{
+                                unit.showCanCell();
+                                unit.unitUp();
+                                selUnit = unit
+                            }
+                            break;
+                        }
+                        // else if(cellData.visible){
+                        //     cellData.setVisible(false)
+                        //     break;
+                        // }
+                    }
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         const gameSpace = new Space(scene);
         spaceRef.current = gameSpace;
@@ -1833,8 +1920,9 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
                     const targetCell = gameSpace.boards[layer-1].cells[row -1][column -1]
                     targetCell.canGo = true;
                     targetCell.canAttack = true
-                    unit.move(targetCell, scene, myTeam, socket, false, target)
-                    turn = turn == "white" ? "black" : "white"
+                    unit.move(targetCell, scene, myTeam, socket, setGameOver, false, target)
+                    turn.current = turn.current == "white" ? "black" : "white";
+                    setTurn(turn.current)
                 }
             })
         })
@@ -1997,80 +2085,7 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
 
         initGame()
 
-        clickHandler = (event: MouseEvent) => {
-            const mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            const intersects = raycaster.intersectObjects(scene.children);
-
-            if (intersects.length > 0) {
-                if(event.button == 0) {//좌클릭
-                    for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData.type == 'units' && intersects[i].object.userData.unit.team == turn && intersects[i].object.userData.unit.team == myTeam){
-                            const unit = intersects[i].object.userData.unit;
-                            if(selUnit instanceof Unit){
-                                if(selUnit != unit){
-                                    selUnit.hideCanCell()
-                                    selUnit.unitDown()
-    
-                                    unit.showCanCell();
-                                    unit.unitUp();
-                                    selUnit = unit;
-                                }else{
-                                    unit.unitDown();
-                                    unit.hideCanCell();
-                                    selUnit = null
-                                }
-                            }else{
-                                unit.showCanCell();
-                                unit.unitUp();
-                                selUnit = unit
-                            }
-                            break;
-                        }else if(intersects[i].object.userData?.cell instanceof Cell){
-                            const cellData: Cell = intersects[i].object.userData.cell;
-                            if(cellData.canGo){
-                                if(selUnit instanceof Unit){
-                                    selUnit.move(cellData, scene, myTeam, socket, true, target)
-                                    turn = turn == "white" ? "black" : "white"
-                                }
-                                selUnit = null;
-                            }/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                            else if(cellData.onUnit && cellData.piece instanceof Unit && cellData.piece.team == turn && cellData.piece.team == myTeam){
-                                const unit = cellData.piece;
-                                if(selUnit instanceof Unit){
-                                    if(selUnit != unit){
-                                        selUnit.hideCanCell()
-                                        selUnit.unitDown()
-        
-                                        unit.showCanCell();
-                                        unit.unitUp();
-                                        selUnit = unit;
-                                    }else{
-                                        unit.unitDown();
-                                        unit.hideCanCell();
-                                        selUnit = null
-                                    }
-                                }else{
-                                    unit.showCanCell();
-                                    unit.unitUp();
-                                    selUnit = unit
-                                }
-                                break;
-                            }
-                            // else if(cellData.visible){
-                            //     cellData.setVisible(false)
-                            //     break;
-                            // }
-                        }
-                    }
-                }
-            }
-        };
         document.addEventListener("mousedown", clickHandler);
 
         return () => {
@@ -2083,7 +2098,7 @@ function ThreeBoard({spaceRef, myTeam, socket, target} :
 
 interface Props {
     team: "white" | "black",
-    socket: Socket<DefaultEventsMap, DefaultEventsMap>,
+    socket: Socket,
     target:string,
     username:string
 }
@@ -2092,7 +2107,9 @@ export default function Chess({team, socket, target, username}: Props){
 
     const spaceRef = useRef<Space | null>(null);
     const [visible, setVisible] = useState(true);
-    const [wallVisible, setWallVisible] = useState(false)
+    const [wallVisible, setWallVisible] = useState(false);
+    const [turn, setTurn] = useState('white');
+    const [result, setGameOver] = useState({gameover: false, winner: ''});
 
     useEffect(() => {
 
@@ -2114,15 +2131,8 @@ export default function Chess({team, socket, target, username}: Props){
                 <directionalLight position={[0,-14,-400]} ></directionalLight>
                 <directionalLight position={[0,-14,400]}  ></directionalLight>
     
-                {/** Code */}
-                <OrbitControls 
-                    mouseButtons={{
-                        LEFT: THREE.MOUSE.LEFT,
-                        MIDDLE: THREE.MOUSE.MIDDLE,
-                        RIGHT: THREE.MOUSE.RIGHT, // 우클릭 방지
-                    }}
-                    maxDistance={100}
-                />
+                <OrbitControls maxDistance={100} />
+
                 <BackGround />
                 <Planet url="/img/planet1.png" position={[50, 10, -30]} size={12}/>
                 <Planet url="/img/planet2.png" position={[-50, 30, -60]} size={11}/>
@@ -2131,18 +2141,12 @@ export default function Chess({team, socket, target, username}: Props){
                 <Planet url="/img/planet4.png" position={[-50, -90, -100]} size={14}/>
                 <Planet url="/img/planet5.jpg" position={[50, 50, 100]} size={20}/>
                 <Planet url="/img/planet6.jpg" position={[-50, 0, 100]} size={10}/>
-                <ThreeBoard spaceRef={spaceRef} myTeam={team} socket={socket} target={target}/>
+                <ThreeBoard spaceRef={spaceRef} socket={socket} setTurn={setTurn} setGameOver={setGameOver} myTeam={team} target={target}/>
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                <div className={styles.visible}>
-                    setVisible
-                    <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
-                </div>
-                <div className={styles.wall}>
-                    show Wall
-                    <input type="checkbox" checked={wallVisible} onChange={(e) => setWallVisible(e.target.checked)} />
-                </div>
+                {result.gameover && <GameOverPage win={result.winner == team} />}
+                <Timer turn={turn} myTeam={team} setGameOver={setGameOver}/>
                 <SettingPage showCell={visible} showWall={wallVisible} setVisible={setVisible} setShowWall={setWallVisible }/>
                 <TeamNotice mode={'Millennium'} team={team}/>
                 <Chat params={{socket, username}}></Chat>

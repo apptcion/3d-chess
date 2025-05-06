@@ -17,8 +17,8 @@
 }
 
 .settingIcon{
-    top: 0;
-    left: 0;
+    position: relative;
+    top: 1vh;
     width: 2.5vw;
     height: 2.5vw;
     margin: 0.5vw;
@@ -26,6 +26,7 @@
     z-index: 4;
     transition: transform 0.3s 0s;
     transform: rotateZ(0deg);
+    cursor: pointer;
 }
 
 .show>.settingIcon{
@@ -73,5 +74,29 @@
     justify-content: center;
     align-items: center;
     width: 1vw;
-    color: purple;
+      /* 기본 스타일 제거 S*/
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* 기본 스타일 제거 E*/
+  position:relative;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.button:checked{
+    background-color: white;
+}
+
+.button:checked::after{
+    content: '';
+    position: relative;
+    bottom: 2px;
+    width: 6px;
+    height: 10px;
+    border-bottom: 2px solid #111;
+    border-right: 2px solid #111;
+    transform: rotate(45deg);
 }

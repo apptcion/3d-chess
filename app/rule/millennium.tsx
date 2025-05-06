@@ -1992,24 +1992,6 @@ export default function Chess({team, setClose}: Props){
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                <div className={styles.visible}>
-                    setVisible &nbsp;
-                    <input 
-                        type="checkbox"
-                        checked={visible}
-                        onChange={(e) => setVisible(e.target.checked)}
-                    />
-                </div>
-                <div className={styles.wall}>
-                    show Wall &nbsp;
-                    <input
-                        type="checkbox"
-                        checked={wallVisible}
-                        onChange={(e) => {
-                            setWallVisible(e.target.checked)
-                        }}
-                    />
-                </div>
                 <div onClick={() => setClose(false)} className={styles.close}>&times;</div>
             </div>
         </div>

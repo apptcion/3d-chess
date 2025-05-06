@@ -1,230 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>양쪽 퍼짐 격자</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #111;
+      overflow: hidden;
+    }
+
+    .grid-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .line {
+      position: absolute;
+      background-color: pink;
+      opacity: 0.4;
+    }
+
+    /* 수평선: 양쪽으로 늘어남 */
+    @keyframes draw-horizontal {
+      from { transform: translateX(-50%) scaleX(0); }
+      to   { transform: translateX(-50%) scaleX(1); }
+    }
+
+    /* 수직선: 양쪽으로 늘어남 */
+    @keyframes draw-vertical {
+      from { transform: translateY(-50%) scaleY(0); }
+      to   { transform: translateY(-50%) scaleY(1); }
+    }
+  </style>
 </head>
 <body>
-    <div class="webgl"></div>
+  <div class="grid-container"></div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
-            }
-        }
-    </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <script>
+    const container = document.querySelector('.grid-container');
+    const spacing = 75;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const duration = 0.5;
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000000;
-        }
+    const lines = [];
 
-        .webgl {
-            width: 100%;
-            height: 100vh;
-            position: fixed;
-            z-index: 3;
-            top: 0;
-            left: 0;
-            outline: none;
-        }
+    // 수평선
+    for (let y = spacing; y < height; y += spacing) {
+      const line = document.createElement('div');
+      line.className = 'line';
+      const length = `${Math.random() * 50 + 50}vw`; // 50~100vw
 
-        .webgl canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: block;
-            width: 100%;
-            height: 100vh;
-        }
-    </style>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      line.style.width = length;
+      line.style.height = '1px';
+      line.style.top = `${y}px`;
+      line.style.left = '50%'; // 중심 기준
+      line.style.transformOrigin = 'center'; // 중심 축으로 애니메이션
+      line.style.animation = `draw-horizontal ${duration}s ease-out forwards`;
+      line.style.animationDelay = `${Math.random()}s`;
 
-        class Effect {
-            constructor() {
-                this.delta = 0;
-                this.textures = {};
-            }
-
-            async init() {
-                this.threeInit();
-                this.texturePromise = this.textureLoader();
-                this.createElements();
-
-                await this.texturePromise;
-                this.sphereBg.material.map = this.textures.sky;
-
-                const container = document.querySelector(".webgl");
-                this.resizeObserver = new ResizeObserver(() => this.onResize());
-                this.resizeObserver.observe(container);
-
-                this.limitFPS(1 / 60);
-            }
-
-            threeInit() {
-                const container = document.querySelector(".webgl");
-
-                this.renderer = new THREE.WebGLRenderer({
-                    powerPreference: "high-performance",
-                    alpha: true,
-                    antialias: true,
-                    stencil: false,
-                });
-                this.renderer.setSize(container.clientWidth, container.clientHeight);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
-                container.appendChild(this.renderer.domElement);
-
-                this.scene = new THREE.Scene();
-
-                this.camera = new THREE.PerspectiveCamera(
-                    55,
-                    window.innerWidth / window.innerHeight,
-                    0.01,
-                    1000
-                );
-                this.camera.position.set(0, 0, 150);
-
-                this.clock = new THREE.Clock();
-
-                const directionalLight = new THREE.DirectionalLight("#fff", 3);
-                directionalLight.position.set(0, 50, -20);
-                this.scene.add(directionalLight);
-
-                let ambientLight = new THREE.AmbientLight("#ffffff", 1);
-                ambientLight.position.set(0, -20, -40);
-                this.scene.add(ambientLight);
-                
-                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.autoRotate = true;
-                this.controls.autoRotateSpeed = 5;
-                this.controls.maxDistance = 350;
-                this.controls.minDistance = 150;
-                this.controls.enablePan = false;
-            }
-
-            textureLoader() {
-                const textureLoader = new THREE.TextureLoader();
-                textureLoader.crossOrigin = 'anonymous';
-                const textureMap = {
-                    sky: "https://i.ibb.co/HC0vxMw/sky2.jpg"
-                };
-
-                return Promise.all(
-                    Object.entries(textureMap).map(([key, path]) => {
-                        return new Promise((resolve, reject) => {
-                            textureLoader.load(
-                                path,
-                                (texture) => {
-                                    texture.colorSpace = THREE.SRGBColorSpace;
-                                    texture.anisotropy = 16;
-                                    this.textures[key] = texture;
-                                    resolve(true);
-                                },
-                                undefined,
-                                (error) => reject(`Error loading texture ${path}: ${error}`)
-                            );
-                        });
-                    })
-                );
-            }
-
-            createElements() {
-                let geometrySphereBg = new THREE.SphereGeometry(90, 50, 50);
-                let materialSphereBg = new THREE.MeshBasicMaterial({
-                    side: THREE.BackSide,
-                });
-                this.sphereBg = new THREE.Mesh(geometrySphereBg, materialSphereBg);
-                this.sphereBg.position.set(0, 0, 0);
-                this.scene.add(this.sphereBg);
-            }
-
-            onResize() {
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-            }
-
-            limitFPS(interval) {
-                this.rafAnimate = requestAnimationFrame(this.limitFPS.bind(this, interval));
-                this.delta += this.clock.getDelta();
-
-                if (this.delta > interval) {
-                    this.loop();
-                    this.delta = this.delta % interval;
-                }
-            }
-
-            loop() {
-                this.controls.update();
-                this.renderer.render(this.scene, this.camera);
-            }
-
-            createPointParticles({
-      texture,
-      size,
-      total,
-      transparent = true,
-      max = 150,
-      min = 70,
-      pointY,
-    }) {
-      const positions = new Float32Array(total * 3);
-      const originalY = new Float32Array(total);
-      let point, idx;
-
-      // Generate random positions on a sphere
-      for (let i = 0; i < total; i++) {
-        point = self.randomPointSphere(THREE.MathUtils.randInt(max, min));
-        idx = i * 3;
-        positions[idx] = point.x;
-        positions[idx + 2] = point.z;
-        if (pointY !== undefined) {
-          // If an explicit y-value was provided
-          positions[idx + 1] = pointY;
-          originalY[i] = point.y;
-        } else positions[idx + 1] = point.y;
-      }
-
-      const pointGeometry = new THREE.BufferGeometry();
-      pointGeometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
-      pointGeometry.setAttribute(
-        "originalY",
-        new THREE.BufferAttribute(originalY, 1)
-      );
-
-      let blending = transparent
-        ? THREE.AdditiveBlending
-        : THREE.NormalBlending;
-      const pointMaterial = new THREE.PointsMaterial({
-        size: size,
-        blending: blending,
-        transparent: true,
-        depthWrite: false,
-      });
-
-      return new THREE.Points(pointGeometry, pointMaterial);
+      lines.push(line);
     }
-  }
 
-        const effect = new Effect();
-        effect.init();
-    </script>
+    // 수직선
+    for (let x = spacing; x < width; x += spacing) {
+      const line = document.createElement('div');
+      line.className = 'line';
+      const length = `${Math.random() * 50 + 50}vh`; // 50~100vh
+
+      line.style.height = length;
+      line.style.width = '1px';
+      line.style.left = `${x}px`;
+      line.style.top = '50%';
+      line.style.transformOrigin = 'center';
+      line.style.animation = `draw-vertical ${duration}s ease-out forwards`;
+      line.style.animationDelay = `${Math.random()}s`;
+
+      lines.push(line);
+    }
+
+    // 랜덤 순서로 추가
+    lines.sort(() => Math.random() - 0.5);
+    lines.forEach(line => container.appendChild(line));
+  </script>
 </body>
 </html>
