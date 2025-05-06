@@ -4,7 +4,7 @@ import { Timer } from '../common/timer'
 import Millenium from '../rule/millennium'
 import { useEffect, useRef, useState } from 'react'
 
-export function GameOver({win}:{win:boolean}){
+function GameOver({win}:{win:boolean}){
     const goMainRef = useRef(null)
 
     useEffect(() => {
