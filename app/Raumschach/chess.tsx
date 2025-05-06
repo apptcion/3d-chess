@@ -13,7 +13,7 @@ import { BackGround, Planet } from '../common/space_3d';
 import TeamNotice from '../common/team_notice';
 import SettingPage from '../common/setting';
 import { Timer } from '../common/timer';
-import GameOverPage from '../common/gameover';
+import GameOver from '../common/gameover';
 
 const colorConfig = {
     opacity : {
@@ -2145,7 +2145,7 @@ export default function Chess({team, socket, target, username}: Props){
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                {result.gameover && <GameOverPage win={result.winner == team} />}
+                {result.gameover && <GameOver win={result.winner == team} />}
                 <Timer turn={turn} myTeam={team} setGameOver={setGameOver}/>
                 <SettingPage showCell={visible} showWall={wallVisible} setVisible={setVisible} setShowWall={setWallVisible }/>
                 <TeamNotice mode={'Millennium'} team={team}/>

@@ -34,7 +34,7 @@ export default function Test(){
     return (
         <div>
             <Timer myTeam='white' turn='white' setGameOver={setGameOver}/>
-            <Millenium team={'white'} setClose={setClose} />
+            {!close && <Millenium team={'white'} setClose={setClose} />}
             <GameOver win={gameover.winner == myTeam}/>
         </div>
     )

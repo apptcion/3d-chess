@@ -14,7 +14,7 @@ import { BackGround, Planet } from '../common/space_3d';
 import TeamNotice from '../common/team_notice';
 import SettingPage from '../common/setting';
 import { Timer } from '../common/timer';
-import {GameOver} from '../test/page';
+import GameOver from '../common/gameover';
 
 const colorConfig = {
     opacity : {
