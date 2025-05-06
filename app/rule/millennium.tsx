@@ -1949,8 +1949,8 @@ interface Props {
 export default function Chess({team, setClose}: Props){
 
     const spaceRef = useRef<Space | null>(null);
-    const [visible, setVisible] = useState(true);
-    const [wallVisible, setWallVisible] = useState(false)
+    const [visible, _setVisible] = useState(true);
+    const [wallVisible, _setWallVisible] = useState(false)
 
     useEffect(() => {
 

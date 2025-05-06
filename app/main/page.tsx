@@ -145,9 +145,9 @@ function Circle() {
     >
       <defs>
         <linearGradient id="grad1" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0.2" stopColor="#ff524c" />
-          <stop offset="0.5" stopColor="#7a43f0" />
-          <stop offset="1"   stopColor="#307df0" />
+          <stop offset="0.2" stopColor="#6e1680" />
+          <stop offset="0.5" stopColor="#3d1f7a" />
+          <stop offset="1" stopColor="#331666" />
         </linearGradient>
       </defs>
       <g fill="none">

@@ -4,7 +4,7 @@ import styles from '../../public/css/chess.module.css'
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '@react-three/drei'
-import React, {useEffect, useState, useRef, SetStateAction } from 'react'
+import React, {useEffect, useState, useRef } from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 import { DefaultEventsMap } from 'socket.io';
@@ -14,7 +14,7 @@ import { BackGround, Planet } from '../common/space_3d';
 import TeamNotice from '../common/team_notice';
 import SettingPage from '../common/setting';
 import { Timer } from '../common/timer';
-import GameOverPage from '../common/gameover';
+import {GameOver} from '../test/page';
 
 const colorConfig = {
     opacity : {
@@ -307,12 +307,12 @@ abstract class Unit{ // == piece ( 체스 기물 )
             }
             if(this.piece == "KING" && this.team == myTeam){
                 console.log("Kill King")
-                alert("you are lose")
+                //alert("you are lose")
                 setGameOver({gameover: true, winner: myTeam == 'white' ? 'black' : 'white'})
                 //location.href="/"
                 //setGameOver
             }else if(this.piece == "KING" && this.team != myTeam){
-                alert("you are win")
+                //alert("you are win")
                 setGameOver({gameover: true, winner: myTeam})
                 //location.href="/"
             }
@@ -2124,14 +2124,14 @@ export default function Chesspage({ params }: { params: Props }) {
     const [result, setGameOver] = useState({gameover: false, winner: ''});
 
     useEffect(() => {
-
+        console.log(`gameover: ${result.gameover}`)
         if(spaceRef.current){
             spaceRef.current.setAllVisible(visible)
             spaceRef.current.addToScene(wallVisible)
         }
         visibleGlobal = visible;
 
-    },[visible, wallVisible, spaceRef])
+    },[visible, wallVisible, spaceRef, result])
 
     return (
         <div className={styles.WRAP}>
@@ -2164,7 +2164,7 @@ export default function Chesspage({ params }: { params: Props }) {
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                {result.gameover && <GameOverPage win={result.winner == team} />}
+                {result.gameover && <GameOver win={result.winner == team} />}
                 <Timer turn={turn} myTeam={team} setGameOver={setGameOver}/>
                 <SettingPage showCell={visible} showWall={wallVisible} setVisible={setVisible} setShowWall={setWallVisible }/>
                 <TeamNotice mode={'Millennium'} team={team}/>

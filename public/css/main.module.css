@@ -4,7 +4,7 @@
     left : 0;
     width : 100vw;
     height : 100vh;
-    background-color: black;
+    background: linear-gradient(black 60%, rgb(12, 2, 24));
 }
 
 .menu{
@@ -153,9 +153,9 @@
   width : 10vw;
   /* in scss with just one variable i can change opacity with rgba(variable, opacity) but in css it's not possible so i have used three seperate variables */
   /* with hue-rotate color can be changed */
-  --main-color: rgb(46, 213, 115);
-  --main-bg-color: rgba(46, 213, 116, 0.36);
-  --pattern-color: rgba(46, 213, 116, 0.073);
+  --main-color: rgb(149, 46, 213);
+  --main-bg-color: rgba(193, 46, 213, 0.36);
+  --pattern-color: rgba(166, 46, 213, 0.073);
 
   filter: hue-rotate(0deg);
 

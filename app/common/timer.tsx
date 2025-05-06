@@ -19,7 +19,7 @@ export function Timer({turn, myTeam, setGameOver}:{turn: string, myTeam: string,
     }
 
     useEffect(() => {
-        setTime(600); // 10분
+        setTime(10); // 10분? 5분?
 
         const intervalId = setInterval(() => {
             setTime(prev => {

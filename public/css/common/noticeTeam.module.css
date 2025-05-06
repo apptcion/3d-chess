@@ -95,7 +95,7 @@
     }
     100% {
         color: transparent;
-        transform: scale(15);
+        transform: scale(19);
         font-size: 4.5vw;
     }
 }
