@@ -14,7 +14,6 @@ function GameOver({win}:{win:boolean}){
             })
         }
     })
-
     
     return (
         <div className={styles.page}>

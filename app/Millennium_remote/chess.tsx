@@ -223,7 +223,8 @@ interface board {
 
 interface gameOverObj {
     gameover: boolean,
-    winner: string
+    winner: string,
+    cause: string
 }
 
 class Board implements board{
@@ -308,12 +309,12 @@ abstract class Unit{ // == piece ( 체스 기물 )
             if(this.piece == "KING" && this.team == myTeam){
                 console.log("Kill King")
                 //alert("you are lose")
-                setGameOver({gameover: true, winner: myTeam == 'white' ? 'black' : 'white'})
+                setGameOver({gameover: true, winner: myTeam == 'white' ? 'black' : 'white', cause: 'checkmate'})
                 //location.href="/"
                 //setGameOver
             }else if(this.piece == "KING" && this.team != myTeam){
                 //alert("you are win")
-                setGameOver({gameover: true, winner: myTeam})
+                setGameOver({gameover: true, winner: myTeam, cause: 'checkmate'})
                 //location.href="/"
             }
             scene.remove(this.model)
@@ -2040,6 +2041,10 @@ function ThreeBoard({spaceRef, socket, setTurn, setGameOver, myTeam, target} :
             })
         })
 
+        socket.on('surrender', () => {
+            setGameOver({gameover: true, winner: myTeam, cause: 'surrend'})
+        })
+
         const initGame = () =>{
             if(myTeam == "white"){         
                 for(let i = 1; i <= 8; i++){
@@ -2121,7 +2126,7 @@ export default function Chesspage({ params }: { params: Props }) {
     const [visible, setVisible] = useState(true);
     const [wallVisible, setWallVisible] = useState(false);
     const [turn, setTurn] = useState('white')
-    const [result, setGameOver] = useState({gameover: false, winner: ''});
+    const [result, setGameOver] = useState({gameover: false, winner: '', cause: ''});
 
     useEffect(() => {
         console.log(`gameover: ${result.gameover}`)
@@ -2164,8 +2169,8 @@ export default function Chesspage({ params }: { params: Props }) {
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                {result.gameover && <GameOver win={result.winner == team} />}
-                <Timer turn={turn} myTeam={team} setGameOver={setGameOver}/>
+                {result.gameover && <GameOver win={result.winner == team} cause={result.cause}/>}
+                <Timer turn={turn} myTeam={team} gameover={result.gameover} setGameOver={setGameOver}/>
                 <SettingPage showCell={visible} showWall={wallVisible} setVisible={setVisible} setShowWall={setWallVisible }/>
                 <TeamNotice mode={'Millennium'} team={team}/>
                 <Chat params={{socket, username}}></Chat>

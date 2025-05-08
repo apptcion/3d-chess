@@ -43,7 +43,7 @@ function Match({
   username: string
 }) {
   const [team, setTeam] = useState<'white' | 'black' | null>(null)
-  const socket = useRef(io('https://chessback.apptcion.site'))
+  const socket = useRef(io('https://chessback.apptcion.site') /*io('http://localhost:49152')*/ ) 
   const [target, setTarget] = useState<string | null>(null)
   const [matched, setMatched] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)

@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 
 interface gameOverObj{
     gameover: boolean,
-    winner: string
+    winner: string,
+    cause: string
 }
-export function Timer({turn, myTeam, setGameOver}:{turn: string, myTeam: string, setGameOver:React.Dispatch<gameOverObj>}){
+export function Timer({turn, myTeam, gameover, setGameOver}:{turn: string, myTeam: string, gameover:boolean, setGameOver:React.Dispatch<gameOverObj>}){
 
     const [time, setTime] = useState(600);
     const parseTime = (time: number) =>{
@@ -19,21 +20,24 @@ export function Timer({turn, myTeam, setGameOver}:{turn: string, myTeam: string,
     }
 
     useEffect(() => {
-        setTime(10); // 10분? 5분?
+        setTime(300); // 10분? 5분?
 
         const intervalId = setInterval(() => {
             setTime(prev => {
                 if (prev <= 0) {
                     clearInterval(intervalId); // 0이 되면 인터벌 종료
-                    setGameOver({gameover: true, winner: turn == 'white' ? 'black' : 'white'})
+                    setGameOver({gameover: true, winner: turn == 'white' ? 'black' : 'white', cause: 'timeout'})
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
+        if(gameover) {
+            clearInterval(intervalId)
+        }
 
         return () => clearInterval(intervalId); // turn 바뀔 때마다 기존 인터벌 제거
-    }, [turn]);
+    }, [turn, gameover]);
 
     return (
         <div className={styles.timerWrap}>

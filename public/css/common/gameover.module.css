@@ -35,6 +35,15 @@
     color: #fe0235;
   }
   
+  .cause{
+    position: relative;
+    top: -2vw;
+    font-size: 1.2vw;
+    color: rgb(213, 213, 213);
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    letter-spacing: 2px;
+  }
+
   .goMain{
     cursor: pointer;
     color: white;

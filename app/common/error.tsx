@@ -16,11 +16,10 @@ export default function Error({params}:{params:Props}){
         const handleClick = () => {
             params.closeActionFunc(null)
         }
+        
         if(btn instanceof SVGElement){
             btn.addEventListener('click', handleClick)
         }
-
-        
     },[])
 
     return (
