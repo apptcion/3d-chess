@@ -219,7 +219,6 @@ const Header = styled.div`
 export default function Main() {
   const [username, setUsername] = useState<string | null>(null)
   const mode = useRef('Millennium')
-  const rotate = useRef(0)
   const [gameStart, setGameStart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

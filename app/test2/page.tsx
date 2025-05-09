@@ -219,7 +219,6 @@ const Header = styled.div`
 export default function Main() {
   const [username, setUsername] = useState<string | null>(null)
   const mode = useRef('Millennium')
-  const rotate = useRef(0)
   const [gameStart, setGameStart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -294,21 +293,6 @@ export default function Main() {
           }
         })
     }
-
-
-    // if(cardRef.current){
-    //   const card = cardRef.current as HTMLElement;
-    //     card.addEventListener('click', () => {
-    //       if(mode.current == 'Millennium' || mode.current == null){
-    //         mode.current = 'Raumschach';
-    //       }else{
-    //         mode.current = 'Millennium';
-    //       }
-    //       rotate.current += 180
-    //       if (rotate.current >= 10000) rotate.current = 0
-    //       card.style.transform = `rotateY(${rotate.current}deg)`
-    //     })
-    // }
 
     if(StartBtnRef.current){
       const startBtn = StartBtnRef.current as HTMLButtonElement;

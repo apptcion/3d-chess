@@ -1913,7 +1913,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
             })
         }
 
-        //initGame()
+        initGame()
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
