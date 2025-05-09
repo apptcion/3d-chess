@@ -1,7 +1,6 @@
 'use client'
 import styles from '../../public/css/main.module.css'
 import matchStyle from '../../public/css/match.module.css'
-import styles_t from '../../public/css/test.module.css'
 
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
@@ -144,7 +143,7 @@ function Circle() {
     <svg
       width="100%"
       height="100%"
-      style={{ height: '500px', width: '500px' }}
+      style={{ height: '700px', width: '700px' }}
       shapeRendering="geometricPrecision"
     >
       <defs>
@@ -171,19 +170,18 @@ function Circle() {
 
 const Card = forwardRef(function Card(
   { modeName }: { modeName: string },
-  ref: React.Ref<HTMLDivElement>
 ) {
   return (
-    <div className={styles_t.card} ref={ref}>
-      <div className={styles_t.imgWrap}>
+    <div className={`${styles.card} ${modeName == 'Millennium' ? styles.front : styles.back}`}>
+      <div className={styles.imgWrap}>
         <Image
-          className={styles_t.img}
+          className={styles.img}
           src={modeName === 'Millennium' ? kingImg : queenImg}
           alt=''
         />
       </div>
-      <div className={styles_t.modeName}>{modeName}</div>
-      <div className={styles_t.describe}>
+      <div className={styles.modeName}>{`${modeName} mode`}</div>
+      <div className={styles.describe}>
         {modeName === 'Millennium' ? '8 x 8 x 3' : '5 x 5 x 5'}
       </div>
     </div>
@@ -193,7 +191,7 @@ const Card = forwardRef(function Card(
 const Background = styled.div`
   position: absolute;
   width: 100vw;
-  height: 90vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -204,6 +202,7 @@ const Content = styled.div`
   position: absolute;
   width: 100vw;
   z-index: 2;
+  perspective: 1000px;
 `
 
 const Header = styled.div`
@@ -219,13 +218,13 @@ const Header = styled.div`
 
 export default function Main() {
   const [username, setUsername] = useState<string | null>(null)
-  const mode = useRef<string | null>(null)
+  const mode = useRef('Millennium')
+  const rotate = useRef(0)
   const [gameStart, setGameStart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const MillRef = useRef(null);
-  const RaumRef = useRef(null);
   const StartBtnRef = useRef(null);
+  const cardRef = useRef(null);
 
   // circle 애니메이션용 상태(ref)
   const circleData = useRef([
@@ -282,22 +281,34 @@ export default function Main() {
       }
     }
     animate()
-    // 모드 선택
-    if(MillRef.current && RaumRef.current){
-      const mill = MillRef.current as HTMLElement
-      const raum = RaumRef.current as HTMLElement
-      mill.addEventListener('click', () => {
-        mode.current = 'Millennium'
-        raum.classList.remove(styles_t.selected)
-        mill.classList.add(styles_t.selected)
-      })
 
-      raum.addEventListener('click', () => {
-        mode.current = 'Raumschach'
-        mill.classList.remove(styles_t.selected)
-        raum.classList.add(styles_t.selected)
-      })
+    if(cardRef.current){
+      const card = cardRef.current as HTMLElement;
+        card.addEventListener('click', () => {
+          if(mode.current == 'Millennium' || mode.current == null){
+            mode.current = 'Raumschach';
+            card.classList.add(`${styles.flip}`);
+          }else if(mode.current == 'Raumschach'){
+            mode.current = 'Millennium';
+            card.classList.remove(`${styles.flip}`);
+          }
+        })
     }
+
+
+    // if(cardRef.current){
+    //   const card = cardRef.current as HTMLElement;
+    //     card.addEventListener('click', () => {
+    //       if(mode.current == 'Millennium' || mode.current == null){
+    //         mode.current = 'Raumschach';
+    //       }else{
+    //         mode.current = 'Millennium';
+    //       }
+    //       rotate.current += 180
+    //       if (rotate.current >= 10000) rotate.current = 0
+    //       card.style.transform = `rotateY(${rotate.current}deg)`
+    //     })
+    // }
 
     if(StartBtnRef.current){
       const startBtn = StartBtnRef.current as HTMLButtonElement;
@@ -310,16 +321,10 @@ export default function Main() {
     }
 
     return () => {
+      if(StartBtnRef.current) removeAllEventListeners(StartBtnRef.current);
+      if(cardRef.current) removeAllEventListeners(cardRef.current);
       cancelAnimationFrame(animId)
-      if(MillRef.current){
-        removeAllEventListeners(MillRef.current)
-      }
-      if(RaumRef.current){
-        removeAllEventListeners(RaumRef.current)
-      }
-      if(StartBtnRef.current){
-        removeAllEventListeners(StartBtnRef.current)
-      }
+
     }
   }, [gameStart])
 
@@ -332,7 +337,7 @@ export default function Main() {
       {!gameStart && (
         <>
           <Background>
-            <ul id="circleList" style={{ width: 500, height: 500 }}>
+            <ul id="circleList" style={{ width: 700, height: 700 }}>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
@@ -340,8 +345,8 @@ export default function Main() {
           </Background>
           <Content>
             <Header>
-              <div className={styles_t.title}>3D CHESS</div>
-              <div className={styles_t.right}>
+              <div className={styles.title}>3D CHESS</div>
+              <div className={styles.right}>
                 <div className={styles.menu} onClick={() => {
                   localStorage.removeItem('token');
                   location.href='/login'
@@ -351,20 +356,21 @@ export default function Main() {
                 }}>Profile</div>
               </div>
             </Header>
-            <div className={styles_t.select} id="select">
-                <Card modeName='Millennium' ref={MillRef}/>
-                <Card modeName='Raumschach' ref={RaumRef}/>
+            <div className={styles.notice}>select mode</div>
+            <div className={styles.select} id="select" ref={cardRef}>
+                <Card modeName='Millennium' />
+                <Card modeName='Raumschach'/>
             </div>
-            <button id="startGame" className={styles.start} ref={StartBtnRef}>
-              Start Game
-            </button>
-            <a
+            <div className={styles.start} ref={StartBtnRef}>
+              <div className={styles.mode}>Start Game</div>
+            </div>
+            {/* <a
               target="_blank"
               href="/rule"
               className={styles.howToPlay}
               rel="noopener noreferrer" >
               How to play
-            </a>
+            </a> */}
           </Content>
         </>
       )}

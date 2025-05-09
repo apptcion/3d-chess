@@ -1913,7 +1913,7 @@ function ThreeBoard({spaceRef, /*turn, setTurn,*/ wallVisible} : {spaceRef: Reac
             })
         }
 
-        initGame()
+        //initGame()
 
         updateGame = () => {
             myUnits.forEach((unit:Unit) => {
@@ -2036,9 +2036,6 @@ export default function Chess(){
     return (
         <div className={styles.WRAP}>
             <Canvas className={styles.SPACE}>
-                
-                {/** dev */}
-                <axesHelper></axesHelper>
 
                 {/** temp */}
                 <directionalLight position={[0,100,0]}></directionalLight>
@@ -2047,44 +2044,7 @@ export default function Chess(){
                 <directionalLight position={[100,-14,0]}></directionalLight>
                 <directionalLight position={[0,-14,-100]}></directionalLight>
                 <directionalLight position={[0,-14,100]}></directionalLight>
-                <mesh position={[0,100,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[0,-100,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-                
-                <mesh position={[100,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
 
-
-                
-                <mesh position={[-100,-14,0]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,100]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-                
-                <mesh position={[0,-14,-100]}>
-                    <boxGeometry></boxGeometry>
-                    <meshBasicMaterial color={'black'}></meshBasicMaterial>
-                </mesh>
-
-                <mesh>
-                    <sphereGeometry args={[100]}></sphereGeometry>
-                    <meshBasicMaterial color={'black'} side={THREE.BackSide}></meshBasicMaterial>
-                </mesh>
     
                 {/** Code */}
                 <OrbitControls 

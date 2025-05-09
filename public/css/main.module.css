@@ -31,33 +31,104 @@
   src: url('/fonts/sterion-font/Sterion-BLLld.ttf') format('truetype');
 }
 
-.title {
-    color: white;
-    font-size : 5vw;
-    font-family: 'Sterion', sans-serif;
-    font-weight: bolder;
-    margin-top : 25vh;
-    display : flex;
-    justify-self: center;
-    justify-content: center;
+.title{
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.3vh;
+  width: 15vw;
+  font-weight: bolder;
+  font-size: 2vw
+}  
+
+.right{
+  display: flex;
 }
 
-.selMode {
-    margin-top : 10vh;
-    display : flex;
-    justify-self: center;
-    justify-content: space-around;
-    width: 45vw;
+.select{
+  position: relative;
+  margin-top: calc((95vh - 22vw)/2 - 12px);
+  margin-left: calc((100vw - 15vw) /2);
+  height: 22vw;
+  width: 15vw;
+  perspective-origin: center;
+  transform-style: preserve-3d;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.selected{
-  text-decoration: underline !important;
-  text-decoration-color: white !important;
-  text-decoration-thickness: 1px !important;
+.flip{
+  transform: rotateY(180deg);
 }
 
+.card{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 10px rgb(202, 194, 255);
+  border-radius: 20px;
+  background: black;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
 
-.mode{
+.front{
+  z-index: 2;
+  backface-visibility: hidden;
+}
+
+.back{
+  z-index: 1;
+  transform: rotateY(180deg);
+}
+
+.imgWrap{
+  width: 100%;
+  height: 77%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.img{
+  height: 10vw;
+  width: 6vw;
+  object-fit: fill;
+  filter: drop-shadow(0 0 20px green)
+}
+
+.modeName{
+  color: white;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5vw;
+  margin-bottom: 1vh;
+}
+
+.describe{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: gray
+}
+
+.notice{
+  position: absolute;
+  color: white;
+  text-transform: uppercase;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  font-size: 20px;
+  margin-top: calc((95vh - 22vw) / 2 - 50px);
+}
+
+/* .mode{
     color : white;
     height : 10vh;
     display: flex;
@@ -99,8 +170,8 @@
   text-shadow: 3px 0 #00ff00;
   animation: noise-anim-2 0.3s infinite linear alternate-reverse;
   z-index: 1;
-}
-
+} */
+/* 
 @keyframes noise-anim {
   0% { clip-path: inset(0 0 0 0); }
   5% { clip-path: inset(40px 0 40px 0); }
@@ -147,65 +218,28 @@
   90% { clip-path: inset(740px 0 740px 0); }
   95% { clip-path: inset(780px 0 780px 0); }
   100% { clip-path: inset(820px 0 820px 0); }
-}
+} */
 
-.start {
-  width : 10vw;
-  /* in scss with just one variable i can change opacity with rgba(variable, opacity) but in css it's not possible so i have used three seperate variables */
-  /* with hue-rotate color can be changed */
-  --main-color: rgb(149, 46, 213);
-  --main-bg-color: rgba(193, 46, 213, 0.36);
-  --pattern-color: rgba(166, 46, 213, 0.073);
-
-  filter: hue-rotate(0deg);
-
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5rem;
-  background: radial-gradient(
-      circle,
-      var(--main-bg-color) 0%,
-      rgba(0, 0, 0, 0) 95%
-    ),
-    linear-gradient(var(--pattern-color) 1px, transparent 1px),
-    linear-gradient(to right, var(--pattern-color) 1px, transparent 1px);
-  background-size:
-    cover,
-    15px 15px,
-    15px 15px;
-  background-position:
-    center center,
-    center center,
-    center center;
-  border-image: radial-gradient(
-      circle,
-      var(--main-color) 0%,
-      rgba(0, 0, 0, 0) 100%
-    )
-    1;
-  border-width: 1px 0 1px 0;
-  color: var(--main-color);
-  padding: 1rem 3rem;
-  font-weight: 700;
-  font-size: 1.5rem;
-  transition: background-size 0.2s ease-in-out;
-
-  margin-top : 5vh;
-  font-size: 1.2vw;
+.start{
   display: flex;
-  justify-self: center;
   justify-content: center;
   align-items: center;
+  color: white;
+  font-size: 1.5vw;
+  font-weight: bold;
+  border: solid 1px white;
+  width: 10vw;
+  height: 5vh;
+  margin: 0 auto;
+  margin-top: 3vh;
+  cursor: pointer;
+  transition: color 0.3s, border 0.3s, box-shadow 0.3s;
 }
 
-.start:hover {
-  background-size:
-    cover,
-    10px 10px,
-    10px 10px;
-}
-.start:active {
-  filter: hue-rotate(250deg);
+.start:hover{
+  color: rgb(112, 193, 112);
+  border: solid 1px green;
+  box-shadow: 0 0 15px rgb(112, 193, 112);
 }
 
 .howToPlay{

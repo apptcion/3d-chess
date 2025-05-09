@@ -2,12 +2,15 @@
 import styles from '../../public/css/main.module.css'
 import matchStyle from '../../public/css/match.module.css'
 
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import styled from 'styled-components'
 import Chess_Raumschach from '../Raumschach/page'
 import Chess_Millennium from '../Millennium_remote/page'
 import ErrorPage from '../common/error'
+import Image from 'next/image'
+import queenImg from '../../public/img/queen_rm.png'
+import kingImg from '../../public/img/king_rm.png'
 
 class Dot {
   public x: number
@@ -140,7 +143,7 @@ function Circle() {
     <svg
       width="100%"
       height="100%"
-      style={{ height: '500px', width: '500px' }}
+      style={{ height: '700px', width: '700px' }}
       shapeRendering="geometricPrecision"
     >
       <defs>
@@ -165,10 +168,30 @@ function Circle() {
   )
 }
 
+const Card = forwardRef(function Card(
+  { modeName }: { modeName: string },
+) {
+  return (
+    <div className={`${styles.card} ${modeName == 'Millennium' ? styles.front : styles.back}`}>
+      <div className={styles.imgWrap}>
+        <Image
+          className={styles.img}
+          src={modeName === 'Millennium' ? kingImg : queenImg}
+          alt=''
+        />
+      </div>
+      <div className={styles.modeName}>{`${modeName} mode`}</div>
+      <div className={styles.describe}>
+        {modeName === 'Millennium' ? '8 x 8 x 3' : '5 x 5 x 5'}
+      </div>
+    </div>
+  )
+})
+
 const Background = styled.div`
   position: absolute;
   width: 100vw;
-  height: 90vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -179,6 +202,7 @@ const Content = styled.div`
   position: absolute;
   width: 100vw;
   z-index: 2;
+  perspective: 1000px;
 `
 
 const Header = styled.div`
@@ -189,18 +213,18 @@ const Header = styled.div`
   width: 100vw;
   height: 5vh;
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
 `
 
 export default function Main() {
   const [username, setUsername] = useState<string | null>(null)
-  const mode = useRef<string | null>(null)
+  const mode = useRef('Millennium')
+  const rotate = useRef(0)
   const [gameStart, setGameStart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const MillRef = useRef(null);
-  const RaumRef = useRef(null);
   const StartBtnRef = useRef(null);
+  const cardRef = useRef(null);
 
   // circle 애니메이션용 상태(ref)
   const circleData = useRef([
@@ -237,7 +261,6 @@ export default function Main() {
     let animId: number = 0;
     const animate = () => {
       if (gameStart) {
-        console.log("원 애니메이션 정지됨")
         cancelAnimationFrame(animId)
       }else{
         circleData.current.forEach((d, i) => {
@@ -258,25 +281,18 @@ export default function Main() {
       }
     }
     animate()
-    // 모드 선택
-    if(MillRef.current && RaumRef.current){
-      const mill = MillRef.current as HTMLElement
-      const raum = RaumRef.current as HTMLElement
-      mill.addEventListener('click', () => {
-        mode.current = 'Millennium'
-        raum.classList.remove(styles.selected)
-        mill.classList.add(styles.selected)
-      })
-    }
 
-    if(MillRef.current && RaumRef.current){
-      const mill = MillRef.current as HTMLElement
-      const raum = RaumRef.current as HTMLElement
-      raum.addEventListener('click', () => {
-        mode.current = 'Raumschach'
-        mill.classList.remove(styles.selected)
-        raum.classList.add(styles.selected)
-      })
+    if(cardRef.current){
+      const card = cardRef.current as HTMLElement;
+        card.addEventListener('click', () => {
+          if(mode.current == 'Millennium' || mode.current == null){
+            mode.current = 'Raumschach';
+            card.classList.add(`${styles.flip}`);
+          }else if(mode.current == 'Raumschach'){
+            mode.current = 'Millennium';
+            card.classList.remove(`${styles.flip}`);
+          }
+        })
     }
 
     if(StartBtnRef.current){
@@ -290,16 +306,10 @@ export default function Main() {
     }
 
     return () => {
+      if(StartBtnRef.current) removeAllEventListeners(StartBtnRef.current);
+      if(cardRef.current) removeAllEventListeners(cardRef.current);
       cancelAnimationFrame(animId)
-      if(MillRef.current){
-        removeAllEventListeners(MillRef.current)
-      }
-      if(RaumRef.current){
-        removeAllEventListeners(RaumRef.current)
-      }
-      if(StartBtnRef.current){
-        removeAllEventListeners(StartBtnRef.current)
-      }
+
     }
   }, [gameStart])
 
@@ -312,7 +322,7 @@ export default function Main() {
       {!gameStart && (
         <>
           <Background>
-            <ul id="circleList" style={{ width: 500, height: 500 }}>
+            <ul id="circleList" style={{ width: 700, height: 700 }}>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
               <li style={{ position: 'absolute' }}> <Circle /> </li>
@@ -320,37 +330,25 @@ export default function Main() {
           </Background>
           <Content>
             <Header>
-              <div className={styles.menu} onClick={() => {
-                localStorage.removeItem('token');
-                location.href='/login'
-              }}>Log out</div>
-              <div className={styles.menu} onClick={() => {
-                location.href='/profile'
-              }}>Profile</div>
+              <div className={styles.title}>3D CHESS</div>
+              <div className={styles.right}>
+                <div className={styles.menu} onClick={() => {
+                  localStorage.removeItem('token');
+                  location.href='/login'
+                }}>Log out</div>
+                <div className={styles.menu} onClick={() => {
+                  location.href='/rule'
+                }}>Rule</div>
+              </div>
             </Header>
-            <div className={styles.title}>3D CHESS</div>
-            <div className={styles.selMode} id="selMode">
-              <div
-                id="Millennium" ref={MillRef} data-text="Millennium"
-                className={`${styles.mode} ${styles.glitch}`} >
-                Millennium
-              </div>
-              <div
-                id="Raumschach" ref={RaumRef} data-text="Raumschach"
-                className={`${styles.mode} ${styles.glitch}`} >
-                Raumschach
-              </div>
+            <div className={styles.notice}>select mode</div>
+            <div className={styles.select} id="select" ref={cardRef}>
+                <Card modeName='Millennium' />
+                <Card modeName='Raumschach'/>
             </div>
-            <button id="startGame" className={styles.start} ref={StartBtnRef}>
-              Start Game
-            </button>
-            <a
-              target="_blank"
-              href="/rule"
-              className={styles.howToPlay}
-              rel="noopener noreferrer" >
-              How to play
-            </a>
+            <div className={styles.start} ref={StartBtnRef}>
+              <div className={styles.mode}>Start Game</div>
+            </div>
           </Content>
         </>
       )}
