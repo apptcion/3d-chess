@@ -154,7 +154,7 @@ function Docs({display}:{display: Array<number>}){
   const ViewList = info.map(({mainTitle, docs}:{mainTitle: string, docs: Array<string>}, index) => { // 타이틀
     const mIdx = index+1
     return docs.map((data: string, index) => {
-        return <div ref={docsRef} style={{width: '100%', height: '100%', paddingLeft: '5rem', paddingBottom: '5rem',overflowY: 'scroll'}}>
+        return <div ref={docsRef} key={index} style={{width: '100%', height: '100%', paddingLeft: '5rem', paddingBottom: '5rem',overflowY: 'scroll'}}>
           {showRaumschach ? <Raumschach setClose={setShowRaumschach}/> : null}
           {showMillennium ? <Millennium setClose={setShowMillennium}/> : null}
                   
