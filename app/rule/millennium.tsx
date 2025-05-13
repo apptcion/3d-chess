@@ -213,12 +213,6 @@ interface board {
     layer : number;
 }
 
-interface gameOverObj {
-    gameover: boolean,
-    winner: string,
-    cause: string
-}
-
 class Board implements board{
     constructor(
         public cells:Array<Array<Cell>>,
@@ -1766,13 +1760,10 @@ class Space implements space {
 }
 
 let myUnits:any = []
-let enemyUnits:any = [];
 let selUnit:Unit | null = null;
 let visibleGlobal = true;
 function ThreeBoard() {
     const { scene, camera } = useThree();
-    const turn = useRef('white')
-
     const changeNumToCol = (columnNum:number) => {
         switch(columnNum){
             case 1:

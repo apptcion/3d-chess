@@ -4,7 +4,7 @@ import styles from '../../public/css/test2.module.css'
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '@react-three/drei'
-import React, {useEffect, useState, useRef} from 'react'
+import React, {useEffect, useRef} from 'react'
 import * as THREE from 'three'
 import { v4 as uuidv4} from 'uuid'
 
@@ -207,12 +207,6 @@ class Board implements board{
         public cells:Array<Array<Cell>>,
         public layer: 1 | 2 | 3 | 4 | 5
     ){}
-}
-
-interface gameOverObj {
-    gameover: boolean,
-    winner: string,
-    cause: string
 }
 
 ////////////////////////////////////////////////////////
@@ -1741,7 +1735,7 @@ class Space implements space {
 
 let myUnits:any = []
 let selUnit:Unit | null = null;
-let visibleGlobal = true;
+const visibleGlobal = true;
 function ThreeBoard() {
         
     const { scene, camera } = useThree();
