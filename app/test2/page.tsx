@@ -39,8 +39,7 @@ export default function Rule() {
             <a
               href="https://www.chess.com/learn-how-to-play-chess"
               target="_blank"
-              className={styles.a}
-            >
+              className={styles.a}>
               자세한 규칙
             </a>
           </h5>
