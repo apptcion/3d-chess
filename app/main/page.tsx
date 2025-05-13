@@ -2,7 +2,7 @@
 import styles from '../../public/css/main.module.css'
 import matchStyle from '../../public/css/match.module.css'
 
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import styled from 'styled-components'
 import Chess_Raumschach from '../Raumschach/page'
@@ -168,9 +168,7 @@ function Circle() {
   )
 }
 
-const Card = forwardRef(function Card(
-  { modeName }: { modeName: string },
-) {
+function Card({modeName}: { modeName: string }) {
   return (
     <div className={`${styles.card} ${modeName == 'Millennium' ? styles.front : styles.back}`}>
       <div className={styles.imgWrap}>
@@ -186,7 +184,7 @@ const Card = forwardRef(function Card(
       </div>
     </div>
   )
-})
+}
 
 const Background = styled.div`
   position: absolute;

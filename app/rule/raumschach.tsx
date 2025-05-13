@@ -1,5 +1,5 @@
 'use client'
-import styles from '../../public/css/rule.module.css'
+import styles from '../../public/css/test2.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -209,6 +209,12 @@ class Board implements board{
     ){}
 }
 
+interface gameOverObj {
+    gameover: boolean,
+    winner: string,
+    cause: string
+}
+
 ////////////////////////////////////////////////////////
 
 abstract class Unit{ // == piece ( 체스 기물 )
@@ -245,21 +251,21 @@ abstract class Unit{ // == piece ( 체스 기물 )
             this.model.position.setY(this.model.position.y + 0.2)
         },10)
         setTimeout(() => {
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01 + 3)
             clearInterval(animeId)
         },150)
     }
 
     public unitDown(){
-        this.model.position.set(this.convertCol() * mapConfig.cellSize.x -13,this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01 + 3, this.row * -mapConfig.cellSize.y + 9)
-        let tempCount = 3;
         const animeId = setInterval(() => {
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 34.5 + 0.01 + tempCount)
-            tempCount -= 0.2
+            this.model.position.setY(this.model.position.y - 0.2)
         },10)
         setTimeout(() => {
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
             clearInterval(animeId)
         },150)
     }
+
 
     public hideCanCell(){
         this.showingCell.forEach(cell => {
@@ -275,40 +281,26 @@ abstract class Unit{ // == piece ( 체스 기물 )
         this.showingCell = [];
     }
 
-    public update(scene:THREE.Scene, myTeam:string){
-        scene.remove(this.model)
+    public update(scene:THREE.Scene){
         if(this.death){
-            if(this.team == myTeam){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
-            }else{
-                enemyUnits = enemyUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-            }
-            if(this.piece == "KING" && this.team == myTeam){
-                console.log("Kill King")
-                alert("you are lose")
-                //setGameOver
-            }else if(this.piece == "KING" && this.team != myTeam){
-                alert("you are win")
-            }
-        }else{        
-            scene.add(this.model)
+            scene.remove(this.model)
         }
     }
 
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black"){
+    move(cell:Cell, scene:THREE.Scene){
+        //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
 
+        const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
+            console.log(cell.piece.ID)
             cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
         }
         //이동한 칸에 기물 정보 추가
         cell.onUnit = true;
@@ -318,26 +310,31 @@ abstract class Unit{ // == piece ( 체스 기물 )
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-        const onceY = ( this.layer - cell.layer ) / 30;
-        const onceZ = ( this.row - cell.row ) / 30;
 
+        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
+        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
+        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
+
+            distanceY += 3;
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-        
-        const animeId = setInterval(() => {
-            this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-            this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-            this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
+
+        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
+            this.model.position.setX(this.model.position.x - distanceX/30)
+            this.model.position.setY(this.model.position.y - distanceY/30)
+            this.model.position.setZ(this.model.position.z + distanceZ/30)
         }, 10)
 
         setTimeout(() => {
-            this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer *  mapConfig.cellSize.Gap - 35 + 0.01)
-            this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
+            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+            if(targetPiece){
+                targetPiece.update(scene)
+            }
         }, 300)
         this.wasHandled = true;
     }
@@ -1475,16 +1472,16 @@ class Pawns extends Unit{
                 }
             }
     }
-    move(cell:Cell, scene:THREE.Scene, myTeam:"white"|"black"){
+    move(cell:Cell, scene:THREE.Scene){
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
         nowCell.onUnitTeam = "none"
         nowCell.piece = null
+        
+        const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
             cell.piece.death = true;
-            console.log("Kill")
-            cell.piece.update(scene, myTeam)
         }
 
         //이동한 칸에 기물 정보 추가
@@ -1495,43 +1492,37 @@ class Pawns extends Unit{
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        const onceX = ( this.convertCol() - cell.getCol() ) / 30;
-        const onceY = ( this.layer - cell.layer ) / 30;
-        const onceZ = ( this.row - cell.row ) / 30;
+        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
+        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
+        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
 
+            distanceY += 3;
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-        
-        const animeId = setInterval(() => {
-            this.model.position.setX(this.model.position.x - onceX * mapConfig.cellSize.x)
-            this.model.position.setY(this.model.position.y - onceY * mapConfig.cellSize.Gap - 0.0745)
-            this.model.position.setZ(this.model.position.z + onceZ * mapConfig.cellSize.y)
+
+        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
+            this.model.position.setX(this.model.position.x - distanceX/30)
+            this.model.position.setY(this.model.position.y - distanceY/30)
+            this.model.position.setZ(this.model.position.z + distanceZ/30)
         }, 10)
 
         setTimeout(() => {
-            this.model.position.setX(this.convertCol() * mapConfig.cellSize.x - 13)
-            this.model.position.setY(this.layer * mapConfig.cellSize.Gap - 35 + 0.01)
-            this.model.position.setZ(this.row * -mapConfig.cellSize.y + 9)
             clearInterval(animeId)
+            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+            if(targetPiece){
+                targetPiece.update(scene)
+            }
             if(this.team == "white" && cell.row == 5 && cell.layer == 5){
                 myUnits = myUnits.filter((unit:Unit) => {
                     return unit.ID != this.ID
                 })
                 scene.remove(this.model)
-                const newObj = new Queen(myTeam, 5 , this.column, 5, this.board)
+                const newObj = new Queen('white', 5 , this.column, 5, this.board)
                 newObj.addToScene(scene)
-                myUnits.push(newObj)
-
-            }
-            else if(this.team == "black"  && cell.row == 1 && cell.layer == 1){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                scene.remove(this.model)
-                const newObj = new Queen(myTeam, 1, this.column, 1, this.board)
-                newObj.addToScene(scene);
                 myUnits.push(newObj)
             }
         }, 300)
@@ -1749,12 +1740,12 @@ class Space implements space {
 }
 
 let myUnits:any = []
-let enemyUnits:any = [];
-let selUnit:unknown = null;
-let clickHandler:(event:MouseEvent) => void;
+let selUnit:Unit | null = null;
 let visibleGlobal = true;
-function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.MutableRefObject<Space | null>, wallVisible:boolean, myTeam: "white" | "black"}) {
+function ThreeBoard() {
+        
     const { scene, camera } = useThree();
+    const turn = useRef('white')
 
     const changeNumToCol = (columnNum:number) => {
         switch(columnNum){
@@ -1771,199 +1762,141 @@ function ThreeBoard({spaceRef, wallVisible, myTeam, } : {spaceRef: React.Mutable
         }
     }
 
-    useEffect(() => {
-        const gameSpace = new Space(scene);
-        spaceRef.current = gameSpace;
-        gameSpace.addToScene(wallVisible)
+    const clickHandler = (event: MouseEvent) => {
+        const canvasBounds = (event.target as HTMLCanvasElement).getBoundingClientRect();
+        const mouse = new THREE.Vector2();
+        mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
+        mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
-        const initGame = () =>{
-            for(let i = 1; i <= 5; i++){
-                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 1, gameSpace.boards))
-            }
-            for(let i = 1; i <= 5; i++){
-                myUnits.push(new Pawns(myTeam, 2, changeNumToCol(i), 2, gameSpace.boards))
-            }
-            myUnits.push(new Bishops( myTeam, 1, "a", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "b", 2, gameSpace.boards))
-            myUnits.push(new Queen(   myTeam, 1, "c", 2, gameSpace.boards))
-            myUnits.push(new Bishops( myTeam, 1, "d", 2, gameSpace.boards))
-            myUnits.push(new Unicorns(myTeam, 1, "e", 2, gameSpace.boards))
-                                      
-            myUnits.push(new Rooks(   myTeam, 1, "a", 1, gameSpace.boards))
-            myUnits.push(new Knights( myTeam, 1, "b", 1, gameSpace.boards))
-            myUnits.push(new King(    myTeam, 1, "c", 1, gameSpace.boards))
-            myUnits.push(new Knights( myTeam, 1, "d", 1, gameSpace.boards))
-            myUnits.push(new Rooks(   myTeam, 1, "e", 1, gameSpace.boards))
-            myUnits.forEach((unit: Unit) => {
-                unit.addToScene(scene)
-            })
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
 
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns("black", 4, changeNumToCol(i), 4, gameSpace.boards))
-            }
-            for(let i = 1; i <= 5; i++){
-                enemyUnits.push(new Pawns("black", 4, changeNumToCol(i), 5, gameSpace.boards))
-            }
+        const intersects = raycaster.intersectObjects(scene.children);
 
-            enemyUnits.forEach((unit:Unit) => {
-                unit.addToScene(scene)
-            })
-        }
-
-        initGame()
-
-        clickHandler = (event: MouseEvent) => {
-            const mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            const intersects = raycaster.intersectObjects(scene.children);
-
-            if (intersects.length > 0) {
-                if(event.button == 0) {//좌클릭
-                    for(let i = 0; i < intersects.length; i++){
-                        if(intersects[i].object.userData.type == 'units'){
-                            if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
+        if (intersects.length > 0) {
+            if(event.button == 0) {//좌클릭
+                for(let i = 0; i < intersects.length; i++){
+                    if(intersects[i].object.userData.type == 'units'){
+                        const unit = intersects[i].object.userData.unit;
+                        if(selUnit instanceof Unit){
+                            if(selUnit != unit){
                                 selUnit.hideCanCell()
                                 selUnit.unitDown()
-                            }
-                            const unit = intersects[i].object.userData.unit;
-                            if(selUnit != unit){        //다른 유닛 잡기             
+
                                 unit.showCanCell();
                                 unit.unitUp();
                                 selUnit = unit;
-                            }else{ // 잡기 취소
+                            }else{
                                 unit.unitDown();
                                 unit.hideCanCell();
-                                selUnit = null;
+                                selUnit = null
                             }
-                            break;
-                        }else if(intersects[i].object.userData?.cell instanceof Cell){
-                            const cellData: Cell = intersects[i].object.userData.cell;
-                            if(cellData.canGo){
-                                if(selUnit instanceof Unit){
-                                    selUnit.move(cellData, scene, myTeam)
-                                }
-                                selUnit = null;
-                            }/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                            else if(cellData.onUnit && cellData.piece instanceof Unit){
-                                if(selUnit instanceof Unit){ //unknown type Unit으로 변환, == 기존에 잡은 유닛이 있다면,
+                        }else{
+                            unit.showCanCell();
+                            unit.unitUp();
+                            selUnit = unit
+                        }
+                        break;
+                    }else if(intersects[i].object.userData?.cell instanceof Cell){
+                        const cellData: Cell = intersects[i].object.userData.cell;
+                        if(cellData.canGo){
+                            if(selUnit instanceof Unit){
+                                selUnit.move(cellData, scene)
+                                turn.current = turn.current == "white" ? "black" : "white"
+                            }
+                            selUnit = null;
+                        }/////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        else if(cellData.onUnit && cellData.piece instanceof Unit){
+                            const unit = cellData.piece;
+                            if(selUnit instanceof Unit){
+                                if(selUnit != unit){
                                     selUnit.hideCanCell()
                                     selUnit.unitDown()
+    
+                                    unit.showCanCell();
+                                    unit.unitUp();
+                                    selUnit = unit;
+                                }else{
+                                    unit.unitDown();
+                                    unit.hideCanCell();
+                                    selUnit = null
                                 }
-                                const unit = cellData.piece;
-                                if(unit != null){
-                                    if(selUnit != unit){        //다른 유닛 잡기             
-                                        unit.showCanCell();
-                                        unit.unitUp();
-                                        selUnit = unit;
-                                    }else{ // 잡기 취소
-                                        unit.unitDown();
-                                        selUnit = null;
-                                    }
-                                }
-                                break;
+                            }else{
+                                unit.showCanCell();
+                                unit.unitUp();
+                                selUnit = unit
                             }
-                        }
-                    }
-                }else if(event.button == 2){
-                    for(let i = intersects.length - 1; i >=0; i--){
-                        if(intersects[i].object.userData?.cell instanceof Cell){
-                            const cellData: Cell = intersects[i].object.userData.cell;
-                            if(!cellData.visible){
-                                intersects[i].object.userData.cell.setVisible(true)
-                                break;
-                            }
+                            break;
                         }
                     }
                 }
             }
-        };
-        document.addEventListener("mousedown", clickHandler);
+        }
+    };
 
-        camera.position.set(0,50,0);
-        camera.lookAt(0, 0, 0);
+    useEffect(() => {
+        const gameSpace = new Space(scene);
+        gameSpace.addToScene(false)
+
+        const initGame = () =>{
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns('white', 2, changeNumToCol(i), 1, gameSpace.boards))
+                }
+                for(let i = 1; i <= 5; i++){
+                    myUnits.push(new Pawns('white', 2, changeNumToCol(i), 2, gameSpace.boards))
+                }
+                myUnits.push(new Bishops( 'white', 1, "a", 2, gameSpace.boards))
+                myUnits.push(new Unicorns('white', 1, "b", 2, gameSpace.boards))
+                myUnits.push(new Queen(   'white', 1, "c", 2, gameSpace.boards))
+                myUnits.push(new Bishops( 'white', 1, "d", 2, gameSpace.boards))
+                myUnits.push(new Unicorns('white', 1, "e", 2, gameSpace.boards))
+
+                myUnits.push(new Rooks(   'white', 1, "a", 1, gameSpace.boards))
+                myUnits.push(new Knights( 'white', 1, "b", 1, gameSpace.boards))
+                myUnits.push(new King(    'white', 1, "c", 1, gameSpace.boards))
+                myUnits.push(new Knights( 'white', 1, "d", 1, gameSpace.boards))
+                myUnits.push(new Rooks(   'white', 1, "e", 1, gameSpace.boards))
+    
+                myUnits.forEach((unit: Unit) => {
+                    unit.addToScene(scene)
+                })
+                camera.position.set(0,10,50)
+        }
+
+        initGame()
+
+
+        document.addEventListener("mousedown", clickHandler);
 
         return () => {
             document.removeEventListener("click", clickHandler);
-            myUnits.forEach((unit:Unit) => {
-              scene.remove(unit.model)  
-            })
-            spaceRef.current?.removeAtScene(scene)
         };
-    }, [camera, scene, spaceRef]);
+    }, [camera, scene]);
 
     return null;
 }
 
 interface Props {
-    team: "white" | "black",
-    setClose: React.Dispatch<React.SetStateAction<boolean>>
+    setClose: React.Dispatch<boolean>
 }
 
-export default function Chess({team, setClose}: Props){
-
-    const spaceRef = useRef<Space | null>(null);
-    const [visible, setVisible] = useState(true);
-    const [wallVisible, setWallVisible] = useState(false)
-
-    useEffect(() => {
-
-        if(spaceRef.current){
-            spaceRef.current.setAllVisible(visible)
-            spaceRef.current.addToScene(wallVisible)
-        }
-        visibleGlobal = visible
-
-    },[visible, wallVisible])
-
+export default function Chess({setClose}: Props){
     return (
         <div className={styles.WRAP}>
             <Canvas className={styles.SPACE}>
-                
-                {/** dev */}
-                <axesHelper></axesHelper>
 
-                {/** temp */}
                 <directionalLight position={[0,400,0]}    ></directionalLight>
                 <directionalLight position={[0,-400,0]}   ></directionalLight>
                 <directionalLight position={[-400,-14,0]} ></directionalLight>
                 <directionalLight position={[400,-14,0]}  ></directionalLight>
                 <directionalLight position={[0,-14,-400]} ></directionalLight>
                 <directionalLight position={[0,-14,400]}  ></directionalLight>
-                <OrbitControls 
-                    mouseButtons={{
-                        LEFT: THREE.MOUSE.LEFT,
-                        MIDDLE: THREE.MOUSE.MIDDLE,
-                        RIGHT: THREE.MOUSE.RIGHT,
-                    }}
-                />
-                <ThreeBoard spaceRef={spaceRef} wallVisible={wallVisible} myTeam={team}/>
+    
+                <OrbitControls maxDistance={100} />
+                <ThreeBoard />
             
             </Canvas>
             <div className={styles.UI} style={{color:'white'}}>
-                <div className={styles.visible}>
-                    setVisible &nbsp;
-                    <input 
-                        type="checkbox"
-                        checked={visible}
-                        onChange={(e) => setVisible(e.target.checked)}
-                    />
-                </div>
-                <div className={styles.wall}>
-                    show Wall &nbsp;
-                    <input
-                        type="checkbox"
-                        checked={wallVisible}
-                        onChange={(e) => {
-                            setWallVisible(e.target.checked)
-                        }}
-                    />
-                </div>
-                
                 <div onClick={() => setClose(false)} className={styles.close}>&times;</div>
             </div>
         </div>

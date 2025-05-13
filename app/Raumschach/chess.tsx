@@ -2139,13 +2139,13 @@ export default function Chess({team, socket, target, username}: Props){
                 <OrbitControls maxDistance={100} />
 
                 <BackGround />
-                <Planet url="/img/planet1.png" position={[50, 10, -30]} size={12}/>
-                <Planet url="/img/planet2.png" position={[-50, 30, -60]} size={11}/>
-                <Planet url="/img/planet3.png" position={[20, -60, 80]} size={9}/>
+                <Planet url="/img/background/planet1.png" position={[50, 10, -30]} size={12}/>
+                <Planet url="/img/background/planet2.png" position={[-50, 30, -60]} size={11}/>
+                <Planet url="/img/background/planet3.png" position={[20, -60, 80]} size={9}/>
                 
-                <Planet url="/img/planet4.png" position={[-50, -90, -100]} size={14}/>
-                <Planet url="/img/planet5.jpg" position={[50, 50, 100]} size={20}/>
-                <Planet url="/img/planet6.jpg" position={[-50, 0, 100]} size={10}/>
+                <Planet url="/img/background/planet4.png" position={[-50, -90, -100]} size={14}/>
+                <Planet url="/img/background/planet5.jpg" position={[50, 50, 100]} size={20}/>
+                <Planet url="/img/background/planet6.jpg" position={[-50, 0, 100]} size={10}/>
                 <ThreeBoard spaceRef={spaceRef} socket={socket} setTurn={setTurn} setGameOver={setGameOver} myTeam={team} target={target}/>
             
             </Canvas>
