@@ -9,7 +9,8 @@
 # testing
 /coverage
 
-/app/test*
+/app/test
+/app/test2
 
 # next.js
 /.next/
