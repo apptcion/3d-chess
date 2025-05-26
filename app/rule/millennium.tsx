@@ -309,33 +309,20 @@ abstract class Unit{ // == piece ( 체스 기물 )
         //이동 가능 칸 숨기기
         this.hideCanCell()
 
-        //기물 옮기기 애니메이션
-        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
-        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
-        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
-        distanceY += 3;
-        
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
 
-        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
-            this.model.position.setX(this.model.position.x - distanceX/30)
-            this.model.position.setY(this.model.position.y - distanceY/30)
-            this.model.position.setZ(this.model.position.z + distanceZ/30)
-        }, 10)
-
-        setTimeout(() => {
-            clearInterval(animeId)
-            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -22.5 + 2);
-            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
-            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 22.5 - 6)
-            if(targetPiece){
-                targetPiece.update(scene)
-            }
-        }, 300)
+        // 애니메이션 없이 바로 위치 이동
+        this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -22.5 + 2);
+        this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01);
+        this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 22.5 - 6);
+        if(targetPiece){
+            targetPiece.update(scene)
+        }
         this.wasHandled = true;
+        selUnit = null; // 이동 후 선택 해제
     }
 
     public convertCol(){
@@ -670,7 +657,7 @@ class Queen extends Unit {
 
             for(let i = 1; i <= 3; i++){ // 좌 하향
                 if(this.layer - i >= 1 && this.row - i >= 1){
-                    const cell = this.board[this.layer - i - 1].cells[this.row - i -1][this.convertCol() - 1];
+                    const cell = this.board[this.layer - i - 1].cells[this.row - i - 1][this.convertCol() - 1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -683,7 +670,7 @@ class Queen extends Unit {
 
             for(let i = 1; i <= 3; i++){ //좌 상향
                 if(this.layer + i <= 3 && this.row - i >= 1){
-                    const cell = this.board[this.layer + i - 1].cells[this.row - i -1][this.convertCol() - 1];
+                    const cell = this.board[this.layer + i - 1].cells[this.row - i - 1][this.convertCol() - 1];
                     if(cell.onUnit){
                         if(cell.onUnitTeam != this.team){
                             cell.makeAttackCell(this.showingCell)
@@ -1665,38 +1652,20 @@ class Pawns extends Unit{
         let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
         const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
 
-            distanceY += 3;
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
 
-        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
-            this.model.position.setX(this.model.position.x - distanceX/30)
-            this.model.position.setY(this.model.position.y - distanceY/30)
-            this.model.position.setZ(this.model.position.z + distanceZ/30)
-        }, 10)
-
-        setTimeout(() => {
-            clearInterval(animeId)
-            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -22.5 + 2);
-            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
-            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 22.5 - 6)
-            if(targetPiece){
-                targetPiece.update(scene)
-            }
-            if(this.team == "white" && cell.row == 8 && cell.layer == 3){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                
-                scene.remove(this.model)
-                const newObj = new Queen('white', 8 , this.column, 3, this.board)
-                newObj.addToScene(scene)
-                myUnits.push(newObj)
-            }
-        }, 300)
+        // 애니메이션 없이 바로 위치 이동
+        this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -22.5 + 2);
+        this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01);
+        this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 22.5 - 6);
+        if(targetPiece){
+            targetPiece.update(scene)
+        }
         this.wasHandled = true;
+        selUnit = null; // 이동 후 선택 해제
     }
 
 }
@@ -1882,6 +1851,14 @@ function ThreeBoard() {
         document.addEventListener("mousedown", clickHandler);
 
         return () => {
+            // 씬에서 모든 오브젝트 제거
+            while (scene.children.length > 0) {
+                scene.remove(scene.children[0]);
+            }
+            // 전역 유닛 배열 등 초기화
+            myUnits = [];
+            selUnit = null;
+            visibleGlobal = true;
             document.removeEventListener("mousedown", clickHandler);
         };
     }, [camera, scene]);

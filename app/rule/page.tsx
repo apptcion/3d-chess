@@ -148,6 +148,8 @@ function Docs({display}:{display: Array<number>}){
       const element = docsRef.current as HTMLDivElement;
       element.scrollTop = 0; // 스크롤을 맨 위로 이동
     }
+    setShowMillennium(false);
+    setShowRaumschach(false);
   }
   , [display]);
 

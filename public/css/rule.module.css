@@ -38,12 +38,13 @@
   z-index : 2;
   font-size : 3vw;
   top : 3vw;
-  right : calc(3vw + 20px);
+  right : 20vw;
   transition: 0.2s;
 }
 
 .close:hover{
-  font-size : 3.2vw;
+  transform: scale(1.2);
+  transform-origin: center;
   color : #ff5555
 }
 

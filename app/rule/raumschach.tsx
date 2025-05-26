@@ -293,7 +293,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         const targetPiece = cell.piece;
         if(cell.canAttack && cell.piece){
-            console.log(cell.piece.ID)
             cell.piece.death = true;
         }
         //이동한 칸에 기물 정보 추가
@@ -303,33 +302,16 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         //이동 가능 칸 숨기기
         this.hideCanCell()
-        //기물 옮기기 애니메이션
-
-        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
-        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
-        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
-
-            distanceY += 3;
-        //내 위치 변경
+        // 즉시 위치 이동 (애니메이션 제거)
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-
-        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
-            this.model.position.setX(this.model.position.x - distanceX/30)
-            this.model.position.setY(this.model.position.y - distanceY/30)
-            this.model.position.setZ(this.model.position.z + distanceZ/30)
-        }, 10)
-
-        setTimeout(() => {
-            clearInterval(animeId)
-            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
-            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
-            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
-            if(targetPiece){
-                targetPiece.update(scene)
-            }
-        }, 300)
+        this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+        this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+        this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+        if(targetPiece){
+            targetPiece.update(scene)
+        }
         this.wasHandled = true;
     }
 
@@ -1438,7 +1420,7 @@ class Pawns extends Unit{
             
             }else if(this.team == "black" && this.layer != 1){
                 upCell = this.board[this.layer-2].cells[this.row -1][this.convertCol() - 1];
-                upRow = this.board[this.layer-2].cells[this.row -1]
+                upRow = this.board[this.layer-2].cells[this.row - 1]
                 if(this.row != 1){
                     upFrontCell = this.board[this.layer-2].cells[this.row-2][this.convertCol() - 1]
                 }
@@ -1485,41 +1467,25 @@ class Pawns extends Unit{
 
         //이동 가능 칸 숨기기
         this.hideCanCell()
-        //기물 옮기기 애니메이션
-        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
-        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
-        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
-
-            distanceY += 3;
-        //내 위치 변경
+        // 즉시 위치 이동 (애니메이션 제거)
         this.layer = cell.layer;
         this.row = cell.row;
         this.column = cell.column;
-
-        const animeId = setInterval(() => {// X : 왼쪽 오른쪽, Y: 위쪽 아래쪽, Z: 앞쪽 뒤쪽
-            this.model.position.setX(this.model.position.x - distanceX/30)
-            this.model.position.setY(this.model.position.y - distanceY/30)
-            this.model.position.setZ(this.model.position.z + distanceZ/30)
-        }, 10)
-
-        setTimeout(() => {
-            clearInterval(animeId)
-            this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
-            this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
-            this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
-            if(targetPiece){
-                targetPiece.update(scene)
-            }
-            if(this.team == "white" && cell.row == 5 && cell.layer == 5){
-                myUnits = myUnits.filter((unit:Unit) => {
-                    return unit.ID != this.ID
-                })
-                scene.remove(this.model)
-                const newObj = new Queen('white', 5 , this.column, 5, this.board)
-                newObj.addToScene(scene)
-                myUnits.push(newObj)
-            }
-        }, 300)
+        this.model.position.setX((this.convertCol()*1.001) * mapConfig.cellSize.x -15 + 2);
+        this.model.position.setY((this.layer*1.001) * mapConfig.cellSize.Gap - 34.5 + 0.01)
+        this.model.position.setZ((this.row*1.001) * -mapConfig.cellSize.y + 15 - 6)
+        if(targetPiece){
+            targetPiece.update(scene)
+        }
+        if(this.team == "white" && cell.row == 5 && cell.layer == 5){
+            myUnits = myUnits.filter((unit:Unit) => {
+                return unit.ID != this.ID
+            })
+            scene.remove(this.model)
+            const newObj = new Queen('white', 5 , this.column, 5, this.board)
+            newObj.addToScene(scene)
+            myUnits.push(newObj)
+        }
         this.wasHandled = true;
     }
 
@@ -1798,7 +1764,7 @@ function ThreeBoard() {
                                 selUnit.move(cellData, scene)
                                 turn.current = turn.current == "white" ? "black" : "white"
                             }
-                            selUnit = null;
+                            selUnit = null; // 이동 후 선택 해제
                         }/////////////////////////////////////////////////////////////////////////////////////////////////////////
                         else if(cellData.onUnit && cellData.piece instanceof Unit){
                             const unit = cellData.piece;
@@ -1859,11 +1825,18 @@ function ThreeBoard() {
 
         initGame()
 
-
         document.addEventListener("mousedown", clickHandler);
 
         return () => {
-            document.removeEventListener("click", clickHandler);
+            // 씬에서 모든 오브젝트 제거
+            while (scene.children.length > 0) {
+                scene.remove(scene.children[0]);
+            }
+            // 전역 유닛 배열 등 초기화
+            myUnits = [];
+            selUnit = null;
+            // visibleGlobal이 const라면 무시, let/var라면 true로
+            document.removeEventListener("mousedown", clickHandler);
         };
     }, [camera, scene]);
 
