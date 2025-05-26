@@ -24,8 +24,10 @@
   position: absolute;
   background-color: rgb(251, 250, 252);
   height: 92vh;
+  top: 0vh;
+  left: 16.8vw;
   z-index: 2;
-  width: calc(100vw * 0.767)
+  width: calc(100vw * 0.83)
 }
 
 
@@ -43,4 +45,22 @@
 .close:hover{
   font-size : 3.2vw;
   color : #ff5555
+}
+
+.SPACE{
+    position: absolute;
+    top : 0;
+    left : 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* 게임 UI가 구현되는 div */
+.UI{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 92vh;
 }

@@ -1,5 +1,5 @@
 'use client'
-import styles from '../../public/css/test2.module.css'
+import styles from '../../public/css/rule.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';

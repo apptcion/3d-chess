@@ -1,5 +1,5 @@
 'use client'
-import styles from '../../public/css/test2.module.css'
+import styles from '../../public/css/rule.module.css'
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -291,7 +291,6 @@ abstract class Unit{ // == piece ( 체스 기물 )
     }
 
     move(cell:Cell, scene:THREE.Scene){
-        
         //현재 칸에 기물 정보 삭제 ( onUnit, onUnitTeam, piece)
         const nowCell = this.board[this.layer - 1].cells[this.row - 1][this.convertCol() - 1];
         nowCell.onUnit = false;
@@ -309,13 +308,13 @@ abstract class Unit{ // == piece ( 체스 기물 )
 
         //이동 가능 칸 숨기기
         this.hideCanCell()
-        //기물 옮기기 애니메이션
 
+        //기물 옮기기 애니메이션
         const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
         let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
         const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
-
-            distanceY += 3;
+        distanceY += 3;
+        
         //내 위치 변경
         this.layer = cell.layer;
         this.row = cell.row;
@@ -1792,7 +1791,6 @@ function ThreeBoard() {
         mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
         mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
-
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
 
@@ -1851,11 +1849,7 @@ function ThreeBoard() {
                                 selUnit = unit
                             }
                             break;
-                        } 
-                        // else if(cellData.visible){        
-                        //     cellData.setVisible(false)
-                        //     break;
-                        // }
+                        }
                     }
                 }
             }
