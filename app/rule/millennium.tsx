@@ -1648,9 +1648,6 @@ class Pawns extends Unit{
         //이동 가능 칸 숨기기
         this.hideCanCell()
         //기물 옮기기 애니메이션
-        const distanceX = ( this.convertCol() - cell.getCol() )*1.001*mapConfig.cellSize.x;
-        let distanceY = ( this.layer - cell.layer)*1.001*mapConfig.cellSize.Gap;
-        const distanceZ = ( this.row - cell.row)*1.001*mapConfig.cellSize.y
 
         //내 위치 변경
         this.layer = cell.layer;
